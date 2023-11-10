@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+
+from ros_introspection.cmake import Command
+from ros_introspection.util import get_packages
+
+from roscompile.cmake import check_cmake_dependencies_helper
+from roscompile.installs import install_section_check
+from roscompile.python_setup import update_python_installs
+
+
+def add_plugin_export(manifest, filename, category='pip_requirements'):
+    """Add the plugin configuration if not found. Add export tag as needed. Return the surrounding export tag."""
+    ex_tag = manifest.get_export_tag()
+
+    for tag in ex_tag.childNodes:
+        if tag.nodeName == category:
+            return
+
+    pe = manifest.tree.createElement(category)
+    pe.appendChild(manifest.tree.createTextNode(filename))
+    manifest.insert_new_tag_inside_another(ex_tag, pe)
+
+
+parser = argparse.ArgumentParser()
+args = parser.parse_args()
+
+pkgs = get_packages()
+
+for package in pkgs:
+    print(package.name)
+
+    REQS = 'requirements.txt'
+    if REQS not in package.misc_files:
+        fn = os.path.join(package.root, REQS)
+        with open(fn, 'w') as f:
+            f.write('')
+    install_section_check(package.cmake, [REQS], 'misc')
+    add_plugin_export(package.manifest, REQS)
+
+    dependencies = {'catkin_virtualenv'}
+
+    package.manifest.add_packages(dependencies, set())
+    check_cmake_dependencies_helper(package.cmake, dependencies, check_catkin_pkg=False)
+
+    COMMAND_NAME = 'catkin_generate_virtualenv'
+    SECTION_NAME = 'PYTHON_VERSION'
+
+    if COMMAND_NAME in package.cmake.content_map:
+        cmd = package.cmake.content_map[COMMAND_NAME][0]
+    else:
+        cmd = Command(COMMAND_NAME)
+        package.cmake.add_command(cmd)
+
+    version_section = cmd.get_section(SECTION_NAME)
+    if not version_section:
+        cmd.add_section(SECTION_NAME)
+        version_section = cmd.get_section(SECTION_NAME)
+
+    if not version_section.values or '3' not in version_section.values[0]:
+        version_section.values = ['3']
+        cmd.changed = True
+
+    update_python_installs(package)
+
+    package.write()

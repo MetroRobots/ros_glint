@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+
+from magical_ros2_conversion_tool.util import convert_to_caps_notation
+
+from ros_introspection.util import get_packages
+
+from roscompile.misc import check_dynamic_reconfigure
+
+
+TEMPLATE = """#!/usr/bin/env python
+from dynamic_reconfigure.parameter_generator_catkin import ParameterGenerator, double_t
+
+gen = ParameterGenerator()
+
+gen.add('double_param', double_t, 0, 'A double parameter', 0.5, 0, 1)
+
+exit(gen.generate('{package_name}', '{package_name}', '{config_name}'))
+"""
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    args = parser.parse_args()
+
+    for package in get_packages():
+        cfg_path = os.path.join(package.root, 'cfg')
+        if not os.path.exists(cfg_path):
+            os.mkdir(cfg_path)
+
+        config_name = convert_to_caps_notation(package.name)
+        file_path = os.path.join(cfg_path, config_name + '.cfg')
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write(TEMPLATE.format(package_name=package.name, config_name=config_name))
+
+    for package in get_packages():
+        check_dynamic_reconfigure(package)
+        package.write()

@@ -1,0 +1,27 @@
+APACHE2.0: Apache License 2.0
+ASL 2.0: Apache License 2.0
+Apache 2: Apache License 2.0
+Apache License Version 2.0: Apache License 2.0
+Apache License, Version 2.0: Apache License 2.0
+Apache V2: Apache License 2.0
+Apache2: Apache License 2.0
+Apache2.0: Apache License 2.0
+BSD: BSD 3-Clause                      # Assume just BSD is 3-clause
+BSD (3-clause): BSD 3-Clause
+BSD-3: BSD 3-Clause
+BSD-3-Clause-Attribution: BSD 3-Clause
+BSDv3: BSD 3-Clause
+EPL: Eclipse Public License
+GNU: GNU General Public License
+GNU Lesser General Public License (LGPL): Lesser General Public License
+GPL: GNU General Public License
+GPLv2: GNU General Public License v2.0
+GPLv2+: GNU General Public License v2.0
+GPLv3: GNU General Public License v3.0
+LGPL: Lesser General Public License
+LGPLv2.1: Lesser General Public License v2.0
+LGPLv3: lgpl-3.0
+Modified BSD: BSD 3-Clause
+Proprietary:
+TODO:
+new BSD: BSD 3-Clause

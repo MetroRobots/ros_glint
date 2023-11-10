@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+from ros_introspection.util import get_packages
+
+from tabulate import tabulate
+
+pkgs = get_packages()
+table = []
+
+for package in pkgs:
+    row = [package.name]
+    row.append('README.md' in package.misc_files)
+    row.append('roslint' in package.manifest.get_packages('test'))
+    table.append(row)
+print(tabulate(sorted(table, key=lambda row: (len([r for r in row if r]), row)), headers=['Name', 'README', 'Lint']))
