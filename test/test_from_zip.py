@@ -1,6 +1,7 @@
 import inspect
 import pathlib
 import pytest
+from clean_ros import get_functions
 from clean_ros.diff import files_match
 from zip_testing import get_test_cases
 
@@ -16,7 +17,7 @@ ros2_config = []
 ros2_ids = []
 ros2_cases = None
 
-roscompile_functions = {}
+cleaner_functions = get_functions()
 
 for fn in TEST_CASE_FILENAMES:
     p = pathlib.Path(fn).resolve()
@@ -60,9 +61,9 @@ def run_case(test_config, cases):
                 resources.packages.add(pkg)
 
         for function_name in test_config['functions']:
-            if function_name not in roscompile_functions:
+            if function_name not in cleaner_functions:
                 continue
-            fne = roscompile_functions[function_name]
+            fne = cleaner_functions[function_name]
             if 'config' in inspect.getfullargspec(fne).args:
                 fne(pp, config=local_config)
             else:
@@ -75,7 +76,7 @@ def run_case(test_config, cases):
         folder_diff = pkg_in.compare_filesets(pkg_out)
 
         def jp(paths):
-            return '/'.join(map(str, paths))
+            return ', '.join(map(str, paths))
 
         assert len(folder_diff['deleted']) == 0, \
             f'These files should have been deleted but weren\'t: {jp(folder_diff["deleted"])}'

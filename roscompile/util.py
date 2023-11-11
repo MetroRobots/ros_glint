@@ -1,4 +1,3 @@
-import collections
 import os
 import re
 import shutil
@@ -14,19 +13,11 @@ PKG_PATH = get_package_path('roscompile')
 TRAILING_PATTERN = re.compile(r'^(.*[^\w])\w+\n$')
 LICENSE_TRANSLATION = yaml.safe_load(open(get_package_file('roscompile', 'data/license_translation.yaml')))
 
-roscompile_functions = collections.OrderedDict()
 REPO_FUNCTIONS = set()
-
-
-# Decorator function for gathering all the functions
-def roscompile(f):
-    roscompile_functions[f.__name__] = f
-    return f
 
 
 # Decorator function for gathering subset of functions that require the whole repo
 def roscompile_repo(f):
-    roscompile(f)
     REPO_FUNCTIONS.add(f.__name__)
     return f
 
