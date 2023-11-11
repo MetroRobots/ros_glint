@@ -56,7 +56,7 @@ class ROSCompilePackageFiles:
         matches = in_keys.intersection(out_keys)
         missed_deletes = in_keys - out_keys
         missed_generations = out_keys - in_keys
-        return {'matches': sorted(matches), 'added': sorted(missed_deletes), 'deleted': sorted(missed_generations)}
+        return {'matches': sorted(matches), 'deleted': sorted(missed_deletes), 'added': sorted(missed_generations)}
 
     def write(self):
         self.clear()

@@ -7,7 +7,6 @@ from zip_testing import get_test_cases
 from ros_introspect import Package, ROSResources
 
 TEST_CASE_FILENAMES = ['../ros1_test_data.zip', '../ros2_test_data.zip']
-FILE_ERROR_MESSAGE = 'These files should have been {} but weren\'t: {}'
 
 ros1_config = []
 ros1_ids = []
@@ -74,8 +73,14 @@ def run_case(test_config, cases):
             resources.packages.remove(pkg)
 
         folder_diff = pkg_in.compare_filesets(pkg_out)
-        assert len(folder_diff['deleted']) == 0, FILE_ERROR_MESSAGE.format('deleted', folder_diff['deleted'])
-        assert len(folder_diff['added']) == 0, FILE_ERROR_MESSAGE.format('generated', folder_diff['added'])
+
+        def jp(paths):
+            return '/'.join(map(str, paths))
+
+        assert len(folder_diff['deleted']) == 0, \
+            f'These files should have been deleted but weren\'t: {jp(folder_diff["deleted"])}'
+        assert len(folder_diff['added']) == 0, \
+            f'These files should have been generated but weren\'t: {jp(folder_diff["added"])}'
         for filename in folder_diff['matches']:
             assert files_match(pkg_in, pkg_out, filename), 'The contents of {} do not match!'.format(filename)
 
