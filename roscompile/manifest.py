@@ -45,24 +45,6 @@ def check_python_dependencies(package):
     package.manifest.add_packages(set(), run_depends, prefer_depend_tag=False)
 
 
-def has_element_child(node):
-    for child in node.childNodes:
-        if child.nodeType == child.ELEMENT_NODE:
-            return True
-    return False
-
-
-@roscompile
-def remove_empty_export_tag(package):
-    exports = package.manifest.root.getElementsByTagName('export')
-    if len(exports) == 0:
-        return False
-    for export in exports:
-        if not has_element_child(export):
-            package.manifest.remove_element(export)
-            return True
-
-
 @roscompile
 def greedy_depend_tag(package):
     if package.manifest.format == 1:
