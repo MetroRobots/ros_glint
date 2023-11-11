@@ -2,7 +2,6 @@ import collections
 import os
 import re
 import shutil
-import stat
 
 from ros_introspection.ros_util import get_package_path, get_package_file
 from ros_introspection.resource_list import get_available_licenses, get_license_info
@@ -56,16 +55,6 @@ def get_ignore_data(name, variables=None, add_newline=True):
     return ignore_lines
 
 
-def make_executable(fn):
-    existing_permissions = stat.S_IMODE(os.lstat(fn).st_mode)
-    os.chmod(fn, existing_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
-
-def make_not_executable(fn):
-    existing_permissions = stat.S_IMODE(os.lstat(fn).st_mode)
-    os.chmod(fn, existing_permissions | ~stat.S_IXUSR | ~stat.S_IXGRP | ~stat.S_IXOTH)
-
-
 def get_config():
     global CONFIG
     if CONFIG is None:
@@ -74,16 +63,6 @@ def get_config():
         else:
             CONFIG = {}
     return CONFIG
-
-
-def convert_to_underscore_notation(name):
-    # https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-
-
-def convert_to_caps_notation(name):
-    return ''.join([x.title() for x in name.split('_')])
 
 
 def get_license_key(license_name):

@@ -7,8 +7,7 @@ import filecmp
 
 from ros_introspection.package import Package
 from ros_introspection.package_structure import get_repo_root
-
-from .terminal import color_diff, color_header
+from clean_ros.terminal import color_diff, color_header
 from .util import copy_text_files, REPO_FUNCTIONS
 
 
@@ -124,16 +123,3 @@ def preview_changes(package, fn_name, fne, use_package_name=False):
     finally:
         shutil.rmtree(temp_dir)
     return True
-
-
-def files_match(pkg_in, pkg_out, filename, show_diff=True):
-    """Return true if the contents of the given file are the same in each package. Otherwise maybe show the diff."""
-    generated_contents = pkg_in.get_contents(filename).rstrip()
-    canonical_contents = pkg_out.get_contents(filename).rstrip()
-    ret = generated_contents == canonical_contents
-    if show_diff and not ret:
-        d = difflib.Differ()
-        print('=' * 50 + filename)
-        result = d.compare(generated_contents.split('\n'), canonical_contents.split('\n'))
-        print('\n'.join(color_diff(result)))
-    return ret
