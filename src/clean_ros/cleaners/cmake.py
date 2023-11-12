@@ -48,7 +48,7 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
         if isinstance(content, Command):
             remove_cmake_command_comments_helper(content, ignorables, replacement)
         elif isinstance(content, CommandGroup):
-            remove_cmake_comments_helper(content.sub, ignorables, replacement)
+            remove_cmake_comments_helper(content.contents, ignorables, replacement)
     cmake.contents = remove_empty_strings(cmake.contents)
     return changed
 

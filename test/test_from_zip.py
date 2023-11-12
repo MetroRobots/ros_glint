@@ -61,6 +61,7 @@ def run_case(test_config, cases):
                 resources.packages.add(pkg)
 
         for function_name in test_config['functions']:
+            assert function_name in cleaner_functions, f'Missing rule: {function_name}'
             if function_name not in cleaner_functions:
                 continue
             fne = cleaner_functions[function_name]

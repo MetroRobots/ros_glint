@@ -1,4 +1,4 @@
-from ros_introspection.package_xml import get_ordering_index, replace_package_set
+from ros_introspection.package_xml import replace_package_set
 
 from .util import get_config, roscompile
 
@@ -50,54 +50,6 @@ def greedy_depend_tag(package):
     if package.package_xml.format == 1:
         return
     replace_package_set(package.package_xml, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')
-
-
-def get_sort_key(node, alphabetize_depends=True):
-    if node:
-        name = node.nodeName
-    else:
-        name = None
-
-    index = get_ordering_index(name)
-
-    if not alphabetize_depends:
-        return index
-    if name and 'depend' in name:
-        return index, node.firstChild.data
-    else:
-        return index, None
-
-
-def get_chunks(children):
-    """Given the children, group the elements into tuples.
-
-    Tuple format: (an element node, [(some number of text nodes), that element node again])
-    """
-    chunks = []
-    current = []
-    for child_node in children:
-        current.append(child_node)
-        if child_node.nodeType == child_node.ELEMENT_NODE:
-            chunks.append((child_node, current))
-            current = []
-    if len(current) > 0:
-        chunks.append((None, current))
-    return chunks
-
-
-@roscompile
-def enforce_manifest_ordering(package, alphabetize=True):
-    root = package.package_xml.root
-    chunks = get_chunks(root.childNodes)
-
-    new_children = []
-
-    for a, b in sorted(chunks, key=lambda d: get_sort_key(d[0], alphabetize)):
-        new_children += b
-
-    if root.childNodes != new_children:
-        package.package_xml.changed = True
-        root.childNodes = new_children
 
 
 @roscompile
