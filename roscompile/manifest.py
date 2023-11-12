@@ -1,6 +1,6 @@
-from ros_introspection.package_xml import count_trailing_spaces, get_ordering_index, replace_package_set
+from ros_introspection.package_xml import get_ordering_index, replace_package_set
 
-from .util import get_config, get_ignore_data, roscompile
+from .util import get_config, roscompile
 
 
 @roscompile
@@ -8,11 +8,11 @@ def check_manifest_dependencies(package):
     build_depends = package.get_build_dependencies()
     run_depends = package.get_run_dependencies()
     test_depends = package.get_test_dependencies()
-    package.manifest.add_packages(build_depends, run_depends, test_depends)
+    package.package_xml.add_packages(build_depends, run_depends, test_depends)
 
     if package.generators:
         md = package.get_dependencies_from_msgs()
-        package.manifest.add_packages(md, md)
+        package.package_xml.add_packages(md, md)
 
         if package.ros_version == 1:
             build_dep = 'message_generation'
@@ -25,79 +25,31 @@ def check_manifest_dependencies(package):
             export = 'rosidl_interface_packages'
             export_tag = 'member_of_group'
 
-        if package.manifest.format == 1:
+        if package.package_xml.format == 1:
             pairs = [('build_depend', build_dep),
                      ('run_depend', run_dep)]
         else:
             pairs = [('build_depend', build_dep),
                      (export_tag, export),
                      ('exec_depend', run_dep)]
-            package.manifest.remove_dependencies('depend', [build_dep, run_dep])
+            package.package_xml.remove_dependencies('depend', [build_dep, run_dep])
         for tag, msg_pkg in pairs:
-            existing = package.manifest.get_packages_by_tag(tag)
+            existing = package.package_xml.get_packages_by_tag(tag)
             if msg_pkg not in existing:
-                package.manifest.insert_new_packages(tag, [msg_pkg])
+                package.package_xml.insert_new_packages(tag, [msg_pkg])
 
 
 @roscompile
 def check_python_dependencies(package):
     run_depends = package.source_code.get_external_python_dependencies()
-    package.manifest.add_packages(set(), run_depends, prefer_depend_tag=False)
+    package.package_xml.add_packages(set(), run_depends, prefer_depend_tag=False)
 
 
 @roscompile
 def greedy_depend_tag(package):
-    if package.manifest.format == 1:
+    if package.package_xml.format == 1:
         return
-    replace_package_set(package.manifest, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')
-
-
-def enforce_tabbing_helper(manifest, node, tabs=1):
-    ideal_length = manifest.std_tab * tabs
-    prev_was_node = True
-    insert_before_list = []
-    if not node:
-        return
-    changed = False
-    for c in node.childNodes:
-        if c.nodeType == c.TEXT_NODE:
-            prev_was_node = False
-            if c == node.childNodes[-1]:
-                continue
-            spaces = count_trailing_spaces(c.data)
-            if spaces > ideal_length:
-                c.data = c.data[: ideal_length - spaces]
-                changed = True
-            elif spaces < ideal_length:
-                c.data = c.data + ' ' * (ideal_length - spaces)
-                changed = True
-            if '\n' not in c.data:
-                c.data = '\n' + c.data
-                changed = True
-        else:
-            if prev_was_node:
-                changed = True
-                insert_before_list.append(c)
-
-            prev_was_node = True
-            enforce_tabbing_helper(manifest, c, tabs + 1)
-
-    for c in insert_before_list:
-        node.insertBefore(manifest.get_tab_element(tabs), c)
-
-    manifest.changed = manifest.changed or changed
-
-    if len(node.childNodes) == 0:
-        return
-    last = node.childNodes[-1]
-    if last.nodeType != last.TEXT_NODE:
-        node.appendChild(manifest.get_tab_element(tabs - 1))
-        manifest.changed = True
-
-
-@roscompile
-def enforce_manifest_tabbing(package):
-    enforce_tabbing_helper(package.manifest, package.manifest.root)
+    replace_package_set(package.package_xml, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')
 
 
 def get_sort_key(node, alphabetize_depends=True):
@@ -135,7 +87,7 @@ def get_chunks(children):
 
 @roscompile
 def enforce_manifest_ordering(package, alphabetize=True):
-    root = package.manifest.root
+    root = package.package_xml.root
     chunks = get_chunks(root.childNodes)
 
     new_children = []
@@ -144,86 +96,8 @@ def enforce_manifest_ordering(package, alphabetize=True):
         new_children += b
 
     if root.childNodes != new_children:
-        package.manifest.changed = True
+        package.package_xml.changed = True
         root.childNodes = new_children
-
-
-def cleanup_text_elements(node):
-    new_children = []
-    changed = False
-
-    for child in node.childNodes:
-        if child.nodeType == child.TEXT_NODE and len(new_children) and new_children[-1].nodeType == child.TEXT_NODE:
-            changed = True
-            new_children[-1].data += child.data
-        elif child.nodeType == child.TEXT_NODE and child.data == '':
-            continue
-        else:
-            new_children.append(child)
-
-    node.childNodes = new_children
-    return changed
-
-
-def replace_text_node_contents(node, ignorables):
-    changed = False
-    removable = []
-    for i, c in enumerate(node.childNodes):
-        if c.nodeType == c.TEXT_NODE:
-            continue
-        elif c.nodeType == c.COMMENT_NODE:
-            short = c.data.strip()
-            if short in ignorables:
-                removable.append(i)
-                changed = True
-                continue
-        else:
-            changed = replace_text_node_contents(c, ignorables) or changed
-    for node_index in reversed(removable):  # backwards not to affect earlier indices
-        if node_index > 0:
-            before = node.childNodes[node_index - 1]
-            if before.nodeType == c.TEXT_NODE:
-                trailing = count_trailing_spaces(before.data)
-                before.data = before.data[:-trailing]
-
-        if node_index < len(node.childNodes) - 1:
-            after = node.childNodes[node_index + 1]
-            if after.nodeType == c.TEXT_NODE:
-                while len(after.data) and after.data[0] == ' ':
-                    after.data = after.data[1:]
-                if len(after.data) and after.data[0] == '\n':
-                    after.data = after.data[1:]
-
-        node.childNodes.remove(node.childNodes[node_index])
-    changed = cleanup_text_elements(node) or changed
-    return changed
-
-
-@roscompile
-def remove_boilerplate_manifest_comments(package):
-    ignorables = get_ignore_data('package', {'package': package.name}, add_newline=False)
-    changed = replace_text_node_contents(package.manifest.root, ignorables)
-    if changed:
-        package.manifest.changed = changed
-        remove_empty_manifest_lines(package)
-
-
-def remove_empty_lines_helper(node):
-    changed = False
-    for child in node.childNodes:
-        if child.nodeType == child.TEXT_NODE:
-            while '\n\n\n' in child.data:
-                child.data = child.data.replace('\n\n\n', '\n\n')
-                changed = True
-        else:
-            changed = remove_empty_lines_helper(child) or changed
-    return changed
-
-
-@roscompile
-def remove_empty_manifest_lines(package):
-    if remove_empty_lines_helper(package.manifest.root):
-        package.manifest.changed = True
 
 
 @roscompile
@@ -231,15 +105,15 @@ def update_people(package, config=None):
     if config is None:
         config = get_config()
     for d in config.get('replace_rules', []):
-        package.manifest.update_people(d['to']['name'], d['to']['email'],
-                                       d['from'].get('name', None), d['from'].get('email', None))
+        package.package_xml.update_people(d['to']['name'], d['to']['email'],
+                                          d['from'].get('name', None), d['from'].get('email', None))
 
 
 @roscompile
 def update_license(package, config=None):
     if config is None:
         config = get_config()
-    if 'default_license' not in config or 'TODO' not in package.manifest.get_license():
+    if 'default_license' not in config or 'TODO' not in package.package_xml.get_license():
         return
 
-    package.manifest.set_license(config['default_license'])
+    package.package_xml.set_license(config['default_license'])

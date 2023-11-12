@@ -22,30 +22,6 @@ def roscompile_repo(f):
     return f
 
 
-def get_ignore_data_helper(basename, add_newline=True):
-    fn = get_package_file('roscompile', 'data/' + basename + '.ignore')
-    lines = []
-    if not os.path.exists(fn):
-        return lines
-    for s in open(fn):
-        if s == '\n':
-            continue
-        if add_newline:
-            lines.append(s)
-        else:
-            lines.append(s[:-1])
-    return lines
-
-
-def get_ignore_data(name, variables=None, add_newline=True):
-    ignore_lines = get_ignore_data_helper(name, add_newline)
-    if not variables:
-        return ignore_lines
-    for pattern in get_ignore_data_helper(name + '_patterns', add_newline):
-        ignore_lines.append(pattern % variables)
-    return ignore_lines
-
-
 def get_config():
     global CONFIG
     if CONFIG is None:

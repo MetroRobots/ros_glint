@@ -1,17 +1,13 @@
-import re
-
 from ros_introspection.cmake import Command, CommandGroup, SectionStyle
 from ros_introspection.resource_list import is_message, is_service
 from ros_introspection.source_code_file import CPLUS, CPLUS2
 
-from .util import get_config, get_ignore_data, roscompile
+from .util import get_config, roscompile
 
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 NEWLINE_PLUS_4 = '\n    '
 NEWLINE_PLUS_8 = '\n        '
 CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
-
-ALL_SPACES = re.compile(r' +')
 
 
 def check_cmake_dependencies_helper1(cmake, dependencies, check_catkin_pkg=True):
@@ -321,14 +317,14 @@ def check_library_setup(package):
 
 def alphabetize_sections_helper(cmake):
     for content in cmake.contents:
-        if content.__class__ == Command:
+        if isinstance(content, Command):
             for section in content.get_real_sections():
                 if section.name in SHOULD_ALPHABETIZE:
                     sorted_values = sorted(section.values)
                     if sorted_values != section.values:
                         section.values = sorted_values
                         content.changed = True
-        elif content.__class__ == CommandGroup:
+        elif isinstance(content, CommandGroup):
             alphabetize_sections_helper(content.sub)
 
 
@@ -410,67 +406,6 @@ def prettify_installs(package):
         if section.style.prename != CATKIN_INSTALL_PYTHON_PRENAME:
             section.style.prename = CATKIN_INSTALL_PYTHON_PRENAME
             cmd.changed = True
-
-
-def remove_empty_strings(a):
-    return list(filter(lambda x: x != '', a))
-
-
-def remove_cmake_command_comments_helper(command, ignorables, replacement=''):
-    for i, section in enumerate(command.sections):
-        if not isinstance(section, str):
-            continue
-        for ignorable in ignorables:
-            while ignorable in command.sections[i]:
-                command.changed = True
-                command.sections[i] = command.sections[i].replace(ignorable, replacement)
-    if command.changed:
-        command.sections = remove_empty_strings(command.sections)
-        if command.sections == ['\n']:
-            command.sections = []
-
-
-def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
-    # Remove Raw Strings
-    for ignorable in ignorables:
-        while ignorable in cmake.contents:
-            i = cmake.contents.index(ignorable)
-            if i > 1:
-                one_before = cmake.contents[i - 1]
-                two_before = cmake.contents[i - 2]
-                if isinstance(one_before, str) and isinstance(two_before, str):
-                    if ALL_SPACES.match(one_before) and two_before[-1] == '\n':
-                        cmake.contents = cmake.contents[:i - 1] + cmake.contents[i + 1:]
-                        continue
-
-            cmake.contents = cmake.contents[:i] + cmake.contents[i + 1:]
-
-    # Remove from Commands/CommandGroups
-    for content in cmake.contents:
-        if content.__class__ == Command:
-            remove_cmake_command_comments_helper(content, ignorables, replacement)
-        elif content.__class__ == CommandGroup:
-            remove_cmake_comments_helper(content.sub, ignorables, replacement)
-    cmake.contents = remove_empty_strings(cmake.contents)
-
-
-@roscompile
-def remove_boilerplate_cmake_comments(package):
-    if not package.cmake:
-        return
-    ignorables = get_ignore_data('cmake', {'package': package.name})
-    remove_cmake_comments_helper(package.cmake, ignorables)
-    remove_empty_cmake_lines(package)
-
-
-@roscompile
-def remove_empty_cmake_lines(package):
-    if not package.cmake:
-        return
-    for i, content in enumerate(package.cmake.contents[:-2]):
-        if str(content)[-1] == '\n' and package.cmake.contents[i + 1] == '\n' and package.cmake.contents[i + 2] == '\n':
-            package.cmake.contents[i + 1] = ''
-    package.cmake.contents = remove_empty_strings(package.cmake.contents)
 
 
 @roscompile
