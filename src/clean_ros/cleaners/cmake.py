@@ -53,9 +53,12 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
     return changed
 
 
-def remove_empty_cmake_lines(cmake):
+@clean_ros
+def remove_empty_cmake_lines(package):
+    cmake = package.cmake.contents
     for i, content in enumerate(cmake.contents[:-2]):
         if str(content)[-1] == '\n' and cmake.contents[i + 1] == '\n' and cmake.contents[i + 2] == '\n':
+            package.cmake.changed = True
             cmake.contents[i + 1] = ''
     cmake.contents = remove_empty_strings(cmake.contents)
 
@@ -68,4 +71,4 @@ def remove_boilerplate_cmake_comments(package):
     ignorables = get_ignore_data('cmake', {'package': package.name})
     if remove_cmake_comments_helper(package.cmake.contents, ignorables):
         package.cmake.changed = True
-    remove_empty_cmake_lines(package.cmake.contents)
+    remove_empty_cmake_lines(package)

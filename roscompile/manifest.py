@@ -5,11 +5,6 @@ from .util import get_config, roscompile
 
 @roscompile
 def check_manifest_dependencies(package):
-    build_depends = package.get_build_dependencies()
-    run_depends = package.get_run_dependencies()
-    test_depends = package.get_test_dependencies()
-    package.package_xml.add_packages(build_depends, run_depends, test_depends)
-
     if package.generators:
         md = package.get_dependencies_from_msgs()
         package.package_xml.add_packages(md, md)

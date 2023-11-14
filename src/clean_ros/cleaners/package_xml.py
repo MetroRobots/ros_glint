@@ -1,6 +1,31 @@
 from ..core import clean_ros
 from ..util import get_ignore_data
-from ros_introspect.components.package_xml import count_trailing_spaces
+from ros_introspect.package import DependencyType
+from ros_introspect.components.package_xml import count_trailing_spaces, get_chunks, get_sort_key
+
+
+@clean_ros
+def check_manifest_dependencies(package):
+    dep_dict = {}
+    for dt in DependencyType:
+        dep_dict[dt] = package.get_dependencies(dt)
+
+    package.package_xml.add_dependencies(dep_dict)
+
+
+@clean_ros
+def enforce_manifest_ordering(package, alphabetize=True):
+    root = package.package_xml.root
+    chunks = get_chunks(root.childNodes)
+
+    new_children = []
+
+    for a, b in sorted(chunks, key=lambda d: get_sort_key(d[0], alphabetize)):
+        new_children += b
+
+    if root.childNodes != new_children:
+        package.package_xml.changed = True
+        root.childNodes = new_children
 
 
 @clean_ros

@@ -20,7 +20,7 @@ ros2_cases = None
 cleaner_functions = get_functions()
 
 for fn in TEST_CASE_FILENAMES:
-    p = pathlib.Path(fn).resolve()
+    p = pathlib.Path(fn)
     v = p.name.split('_')[0]
     config, test_data = get_test_cases(p)
 
