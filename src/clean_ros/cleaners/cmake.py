@@ -3,6 +3,7 @@ import re
 from ..core import clean_ros
 from ..util import get_ignore_data
 
+from ros_introspect.package import DependencyType
 from stylish_cmake_parser import Command, CommandGroup
 ALL_SPACES = re.compile(r' +')
 
@@ -72,3 +73,92 @@ def remove_boilerplate_cmake_comments(package):
     if remove_cmake_comments_helper(package.cmake.contents, ignorables):
         package.cmake.changed = True
     remove_empty_cmake_lines(package)
+
+
+def get_command_section(cmake, cmd_name, section_name):
+    """Return the first matching section from the properly named command"""
+    for cmd in cmake.content_map[cmd_name]:
+        s = cmd.get_section(section_name)
+        if s:
+            return s
+
+
+def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alpha_order=True, ignore_quoting=False):
+    """Ensure there's a CMake command of the given type with the given section name and items."""
+    changed = False
+
+    if len(items) == 0 and not zero_okay:
+        return changed
+
+    section = get_command_section(cmake, cmd_name, section_name)
+
+    if not section:
+        if cmake.content_map[cmd_name]:
+            cmd = cmake.content_map[cmd_name][0]
+        else:
+            cmd = Command(cmd_name)
+            cmake.insert(cmd)
+            changed = True
+
+    if section is None:
+        cmd.add_section(section_name, sorted(items))
+        changed = True
+
+
+def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
+    if not dependencies:
+        return
+
+    cmake = package.cmake.contents
+    if package.ros_version == 1:
+        if len(cmake.content_map['find_package']) == 0:
+            cmd = Command('find_package')
+            # TODO: Standard indentation
+            cmd.add_section('', ['catkin'])
+            cmd.add_section('REQUIRED')
+            cmake.add_command(cmd)
+            package.cmake.changed = True
+
+        for cmd in cmake.content_map['find_package']:
+            tokens = cmd.get_tokens()
+            if not tokens or tokens[0] != 'catkin':
+                continue
+
+            req_sec = cmd.get_section('REQUIRED')
+            if not req_sec:
+                continue
+            section = cmd.get_section('COMPONENTS')
+            if section is None and req_sec.values:
+                section = req_sec  # Allow packages to be listed without COMPONENTS keyword
+            if section is None:
+                cmd.add_section('COMPONENTS', sorted(dependencies))
+                package.cmake.changed = True
+            else:
+                existing = cmake.resolve_variables(section.values)
+                needed_items = dependencies - set(existing)
+                if needed_items:
+                    section.add_values(needed_items)
+                    cmd.changed = True
+                    package.cmake.changed = True
+        if check_catkin_pkg:
+            ret = section_check(cmake, dependencies, 'catkin_package', 'CATKIN_DEPENDS')
+            if ret:
+                package.cmake.changed = True
+    else:
+        existing = set()
+        for cmd in cmake.content_map['find_package']:
+            existing.update(cmd.get_tokens())
+
+        for pkg in sorted(dependencies - existing):
+            cmd = Command('find_package')
+            cmd.add_section('', [pkg])
+            cmd.add_section('REQUIRED')
+            cmake.insert(cmd)
+
+
+@clean_ros
+def check_cmake_dependencies(package):
+    if not package.cmake:
+        return
+    dependencies = package.get_dependencies(DependencyType.BUILD)
+    install_cmake_dependencies(package, dependencies)

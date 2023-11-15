@@ -1,6 +1,8 @@
 from ros_introspection.cmake import Command, CommandGroup, SectionStyle
 from ros_introspection.resource_list import is_message, is_service
 from ros_introspection.source_code_file import CPLUS, CPLUS2
+from clean_ros.cleaners.cmake import check_cmake_dependencies_helper
+
 
 from .util import get_config, roscompile
 
@@ -8,68 +10,6 @@ SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 NEWLINE_PLUS_4 = '\n    '
 NEWLINE_PLUS_8 = '\n        '
 CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
-
-
-def check_cmake_dependencies_helper1(cmake, dependencies, check_catkin_pkg=True):
-    if len(dependencies) == 0:
-        return
-    if len(cmake.content_map['find_package']) == 0:
-        cmd = Command('find_package')
-        cmd.add_section('', ['catkin'])
-        cmd.add_section('REQUIRED')
-        cmake.add_command(cmd)
-
-    for cmd in cmake.content_map['find_package']:
-        tokens = cmd.get_tokens()
-        if tokens and tokens[0] == 'catkin' and cmd.get_section('REQUIRED'):
-            req_sec = cmd.get_section('REQUIRED')
-            section = cmd.get_section('COMPONENTS')
-            if section is None and req_sec.values:
-                section = req_sec  # Allow packages to be listed without COMPONENTS keyword
-            if section is None:
-                cmd.add_section('COMPONENTS', sorted(dependencies))
-            else:
-                existing = cmake.resolve_variables(section.values)
-                needed_items = dependencies - set(existing)
-                if needed_items:
-                    section.add_values(needed_items)
-                    cmd.changed = True
-    if check_catkin_pkg:
-        cmake.section_check(dependencies, 'catkin_package', 'CATKIN_DEPENDS')
-
-
-def check_cmake_dependencies_helper2(cmake, dependencies):
-    if len(dependencies) == 0:
-        return
-
-    existing = set()
-    for cmd in cmake.content_map['find_package']:
-        existing.update(cmd.get_tokens())
-
-    for pkg in sorted(dependencies - existing):
-        cmd = Command('find_package')
-        cmd.add_section('', [pkg])
-        cmd.add_section('REQUIRED')
-        cmake.add_command(cmd)
-
-
-def check_cmake_dependencies_helper(package, dependencies, check_catkin_pkg=True):
-    if not dependencies:
-        return
-
-    if package.build_type == 'ament_cmake':
-        check_cmake_dependencies_helper2(package.cmake, dependencies)
-    else:
-        check_cmake_dependencies_helper1(package.cmake, dependencies)
-
-
-@roscompile
-def check_cmake_dependencies(package):
-    if not package.cmake:
-        return
-    dependencies = package.get_dependencies_from_msgs()
-    dependencies.update(package.get_build_dependencies())
-    check_cmake_dependencies_helper(package, dependencies)
 
 
 def get_matching_add_depends(cmake, search_target):
