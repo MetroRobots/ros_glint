@@ -83,6 +83,30 @@ def get_command_section(cmake, cmd_name, section_name):
             return s
 
 
+def ensure_section_values(cmake, section, items, alpha_order=True, ignore_quoting=False):
+    """Ensure the CMake command with the given section has all of the values in items."""
+    existing = cmake.resolve_variables(section.values)
+
+    needed_items = []
+    for item in items:
+        if item in existing or item in section.values:
+            continue
+
+        if ignore_quoting:
+            quoted = f'"{item}"'
+            if quoted in existing or quoted in section.values:
+                continue
+
+        # TODO: Should maybe follow quote style
+        needed_items.append(item)
+
+    if needed_items:
+        section.add_values(needed_items, alpha_order)
+        # section.parent.changed = True
+        return True
+    return False
+
+
 def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alpha_order=True, ignore_quoting=False):
     """Ensure there's a CMake command of the given type with the given section name and items."""
     changed = False
@@ -103,6 +127,9 @@ def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alph
     if section is None:
         cmd.add_section(section_name, sorted(items))
         changed = True
+    else:
+        changed |= ensure_section_values(cmake, section, items, alpha_order, ignore_quoting)
+    return changed
 
 
 def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
@@ -162,3 +189,52 @@ def check_cmake_dependencies(package):
         return
     dependencies = package.get_dependencies(DependencyType.BUILD)
     install_cmake_dependencies(package, dependencies)
+
+
+@clean_ros
+def check_generators(package):
+    if not package.cmake or not package.defines_ros_interfaces:
+        return
+
+    all_interfaces = []
+    for interferface_defs in [package.messages, package.services, package.actions]:
+        all_interfaces += interferface_defs
+
+    cmake = package.cmake.contents
+    if package.ros_version == 1:
+        changed = section_check(cmake, [m.fn for m in package.messages],
+                                'add_message_files', 'FILES')
+        changed |= section_check(cmake, [s.fn for s in package.services],
+                                 'add_service_files', 'FILES')
+        changed |= section_check(cmake, [a.fn for a in package.actions],
+                                 'add_action_files', 'FILES')
+        changed |= section_check(cmake, ['message_generation'], 'find_package', 'COMPONENTS')
+        changed |= section_check(cmake, ['message_runtime'], 'catkin_package', 'CATKIN_DEPENDS')
+
+        generate_cmd = 'generate_messages'
+    else:
+        generate_cmd = 'rosidl_generate_interfaces'
+
+        if len(package.cmake.content_map[generate_cmd]) == 0:
+            cmd = Command('rosidl_generate_interfaces')
+            cmd.add_section('${PROJECT_NAME}')
+            cmake.add_command(cmd)
+            package.cmake.changed = True
+
+        rel_fns = [ros_interface.rel_fn for ros_interface in all_interfaces]
+        changed |= section_check(cmake, rel_fns, generate_cmd, '', ignore_quoting=True)
+
+        install_cmake_dependencies(package, {'rosidl_default_generators'})
+        changed |= section_check(cmake, ['rosidl_default_runtime'], 'ament_export_dependencies', '')
+
+    msg_deps = set()
+    for ros_interface in all_interfaces:
+        msg_deps |= ros_interface.get_dependencies(DependencyType.BUILD)
+
+    if msg_deps:
+        changed |= section_check(cmake, msg_deps, generate_cmd, 'DEPENDENCIES', zero_okay=True)
+    else:
+        changed |= section_check(cmake, msg_deps, generate_cmd, zero_okay=True)
+
+    if changed:
+        package.cmake.changed = True

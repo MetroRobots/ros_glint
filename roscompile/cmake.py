@@ -1,7 +1,6 @@
 from ros_introspection.cmake import Command, CommandGroup, SectionStyle
 from ros_introspection.resource_list import is_message, is_service
 from ros_introspection.source_code_file import CPLUS, CPLUS2
-from clean_ros.cleaners.cmake import check_cmake_dependencies_helper
 
 
 from .util import get_config, roscompile
@@ -173,48 +172,12 @@ def target_catkin_libraries(package):
 
 @roscompile
 def check_generators(package):
-    if len(package.generators) == 0 or not package.cmake:
-        return
-
     if package.ros_version == 1:
-        for gen_type, cmake_cmd in [('msg', 'add_message_files'),
-                                    ('srv', 'add_service_files'),
-                                    ('action', 'add_action_files')]:
-            names = [gen.name for gen in package.generators[gen_type]]
-            package.cmake.section_check(names, cmake_cmd, 'FILES')
-
-        package.cmake.section_check(['message_generation'], 'find_package', 'COMPONENTS')
-        package.cmake.section_check(['message_runtime'], 'catkin_package', 'CATKIN_DEPENDS')
         for cmd in package.cmake.content_map['catkin_package']:
             section = cmd.get_section('CATKIN_DEPENDS')
             if 'message_generation' in section.values:
                 section.values.remove('message_generation')
                 cmd.changed = True
-        generate_cmd = 'generate_messages'
-    else:
-        generate_cmd = 'rosidl_generate_interfaces'
-        if len(package.cmake.content_map[generate_cmd]) == 0:
-            cmd = Command('rosidl_generate_interfaces')
-            cmd.add_section('${PROJECT_NAME}')
-            package.cmake.add_command(cmd)
-
-        rel_fns = []
-        for gen_type in ['msg', 'srv', 'action']:
-            for gen in package.generators[gen_type]:
-                rel_fns.append(gen.rel_fn)
-        package.cmake.section_check(rel_fns, generate_cmd, '', ignore_quoting=True)
-
-        check_cmake_dependencies_helper(package, {'rosidl_default_generators'})
-
-        package.cmake.section_check(['rosidl_default_runtime'], 'ament_export_dependencies', '')
-
-    msg_deps = package.get_dependencies_from_msgs()
-    if msg_deps:
-        package.cmake.section_check(msg_deps, generate_cmd,
-                                    'DEPENDENCIES', zero_okay=True)
-    else:
-        package.cmake.section_check(msg_deps, generate_cmd,
-                                    zero_okay=True)
 
 
 @roscompile

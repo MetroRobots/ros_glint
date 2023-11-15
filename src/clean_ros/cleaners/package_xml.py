@@ -14,7 +14,7 @@ def check_manifest_dependencies(package):
 
     # Special handling for interface dependencies
     # because not all run deps are build deps
-    if not package.messages and not package.services and not package.actions:
+    if not package.defines_ros_interfaces:
         return
     if package.ros_version == 1:
         build_dep = 'message_generation'
