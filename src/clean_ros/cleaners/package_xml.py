@@ -197,3 +197,24 @@ def remove_boilerplate_manifest_comments(package):
     if changed:
         package.package_xml.changed = changed
         remove_empty_manifest_lines(package)
+
+
+def replace_package_set(package_xml, source_tags, new_tag):
+    """Replace all the elements with tags in source_tags with new elements with new_tag."""
+    intersection = None
+    for tag in source_tags:
+        pkgs = set(package_xml.get_packages_by_tag(tag))
+        if intersection is None:
+            intersection = pkgs
+        else:
+            intersection = intersection.intersection(pkgs)
+    for tag in source_tags:
+        package_xml.remove_dependencies(tag, intersection)
+    package_xml.insert_new_packages(new_tag, intersection)
+
+
+@clean_ros
+def greedy_depend_tag(package):
+    if package.package_xml.xml_format == 1:
+        return
+    replace_package_set(package.package_xml, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')

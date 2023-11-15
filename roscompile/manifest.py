@@ -1,5 +1,3 @@
-from ros_introspection.package_xml import replace_package_set
-
 from .util import get_config, roscompile
 
 
@@ -7,13 +5,6 @@ from .util import get_config, roscompile
 def check_python_dependencies(package):
     run_depends = package.source_code.get_external_python_dependencies()
     package.package_xml.add_packages(set(), run_depends, prefer_depend_tag=False)
-
-
-@roscompile
-def greedy_depend_tag(package):
-    if package.package_xml.format == 1:
-        return
-    replace_package_set(package.package_xml, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')
 
 
 @roscompile
