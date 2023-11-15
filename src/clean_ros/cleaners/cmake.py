@@ -5,7 +5,7 @@ from ..cmake_ordering import insert_in_order
 from ..util import get_ignore_data
 
 from ros_introspect.package import DependencyType
-from stylish_cmake_parser import Command, CommandGroup
+from stylish_cmake_parser import Command, CommandGroup, SectionStyle
 ALL_SPACES = re.compile(r' +')
 
 
@@ -133,6 +133,33 @@ def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alph
     return changed
 
 
+def targeted_section_check(cmake_file, cmd_name, section_name, items, style=None):
+    cmake = cmake_file.contents
+
+    def get_targeted_command(target_name):
+        for cmd in cmake.content_map[cmd_name]:
+            tokens = cmd.get_tokens()
+            if tokens and target_name == tokens[0]:
+                return cmd
+
+    for target in cmake_file.get_libraries() + cmake_file.get_executables():
+        cmd = get_targeted_command(target)
+        if cmd is None:
+            cmd = Command(cmd_name)
+            if section_name:
+                cmd.add_section('', [target])
+                cmd.add_section(section_name, items, style)
+            else:
+                cmd.add_section(section_name, [target] + items, style)
+            insert_in_order(cmake, cmd)
+            cmake_file.changed = True
+        else:
+            section = cmd.get_section(section_name)
+            if style:
+                section.style = style
+            cmake_file.changed |= cmake.ensure_section_values(cmd, section, items, alpha_order=False)
+
+
 def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
     if not dependencies:
         return
@@ -182,6 +209,7 @@ def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
             cmd.add_section('', [pkg])
             cmd.add_section('REQUIRED')
             insert_in_order(cmake, cmd)
+            package.cmake.changed = True
 
 
 @clean_ros
@@ -199,9 +227,10 @@ def check_generators(package):
         return
 
     cmake = package.cmake.contents
+    changed = False
     if package.ros_version == 1:
-        changed = section_check(cmake, [m.fn for m in package.messages],
-                                'add_message_files', 'FILES')
+        changed |= section_check(cmake, [m.fn for m in package.messages],
+                                 'add_message_files', 'FILES')
         changed |= section_check(cmake, [s.fn for s in package.services],
                                  'add_service_files', 'FILES')
         changed |= section_check(cmake, [a.fn for a in package.actions],
@@ -213,13 +242,13 @@ def check_generators(package):
     else:
         generate_cmd = 'rosidl_generate_interfaces'
 
-        if len(package.cmake.content_map[generate_cmd]) == 0:
+        if not cmake.content_map[generate_cmd]:
             cmd = Command('rosidl_generate_interfaces')
             cmd.add_section('${PROJECT_NAME}')
-            cmake.add_command(cmd)
+            insert_in_order(cmake, cmd)
             package.cmake.changed = True
 
-        rel_fns = [ros_interface.rel_fn for ros_interface in all_interfaces]
+        rel_fns = [str(ros_interface.rel_fn) for ros_interface in all_interfaces]
         changed |= section_check(cmake, rel_fns, generate_cmd, '', ignore_quoting=True)
 
         install_cmake_dependencies(package, {'rosidl_default_generators'})
@@ -236,3 +265,43 @@ def check_generators(package):
 
     if changed:
         package.cmake.changed = True
+
+
+@clean_ros
+def check_includes(package):
+    if not package.cmake:
+        return
+
+    has_cpp = False
+    has_header_files = False
+    for source_file in package.source_code:
+        if source_file.language != 'c++':
+            continue
+        has_cpp = True
+        parts = source_file.rel_fn.parts
+        if len(parts) > 1 and parts[0] == 'include' and parts[1] == package.name:
+            has_header_files = True
+    if not has_cpp:
+        return
+
+    changed = False
+    cmake = package.cmake.contents
+
+    if package.ros_version == 1:
+        if has_header_files:
+            changed |= section_check(cmake, ['include'], 'catkin_package', 'INCLUDE_DIRS')
+            changed |= section_check(cmake, ['include'], 'include_directories', alpha_order=False)
+
+        changed |= section_check(cmake, ['${catkin_INCLUDE_DIRS}'], 'include_directories', alpha_order=False)
+
+    else:
+        include_directories = []
+        if has_header_files:
+            include_directories.append('$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>')
+
+        include_directories.append('$<INSTALL_INTERFACE:include>')
+
+        targeted_section_check(package.cmake, 'target_include_directories', 'PUBLIC', include_directories,
+                               SectionStyle(name_val_sep='\n  ', val_sep='\n  '))
+
+    package.cmake.changed |= changed

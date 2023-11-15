@@ -1,6 +1,7 @@
 from ros_introspection.cmake import Command, CommandGroup, SectionStyle
 from ros_introspection.resource_list import is_message, is_service
 from ros_introspection.source_code_file import CPLUS, CPLUS2
+from clean_ros.cleaners.cmake import targeted_section_check
 
 
 from .util import get_config, roscompile
@@ -128,32 +129,6 @@ def remove_old_style_cpp_dependencies(package):
         check_exported_dependencies(package)
 
 
-def get_targeted_command(cmake, cmd_name, target_name):
-    for cmd in cmake.content_map[cmd_name]:
-        tokens = cmd.get_tokens()
-        if tokens and target_name == tokens[0]:
-            return cmd
-
-
-def targeted_section_check(cmake, cmd_name, section_name, items, style=None):
-    for target in cmake.get_libraries() + cmake.get_executables():
-        cmd = get_targeted_command(cmake, cmd_name, target)
-        if cmd is None:
-            print(f'\tAdding {cmd_name} for {target}')
-            cmd = Command(cmd_name)
-            if section_name:
-                cmd.add_section('', [target])
-                cmd.add_section(section_name, items, style)
-            else:
-                cmd.add_section(section_name, [target] + items, style)
-            cmake.add_command(cmd)
-        else:
-            section = cmd.get_section(section_name)
-            if style:
-                section.style = style
-            cmake.ensure_section_values(cmd, section, items, alpha_order=False)
-
-
 @roscompile
 def target_catkin_libraries(package):
     if not package.cmake:
@@ -178,36 +153,6 @@ def check_generators(package):
             if 'message_generation' in section.values:
                 section.values.remove('message_generation')
                 cmd.changed = True
-
-
-@roscompile
-def check_includes(package):
-    if not package.cmake or not package.source_code.get_source_by_language('c++'):
-        return
-
-    if package.ros_version == 1:
-        has_includes = False
-        if package.source_code.has_header_files():
-            package.cmake.section_check(['include'], 'catkin_package', 'INCLUDE_DIRS')
-            package.cmake.section_check(['include'], 'include_directories', alpha_order=False)
-            has_includes = True
-
-        if len(package.source_code.get_source_by_language('c++')) > 0:
-            package.cmake.section_check(['${catkin_INCLUDE_DIRS}'], 'include_directories', alpha_order=False)
-            has_includes = True
-
-        if not has_includes and 'include_directories' in package.cmake.content_map:
-            for cmd in package.cmake.content_map['include_directories']:
-                package.cmake.remove_command(cmd)
-    else:
-        include_directories = []
-        if package.source_code.has_header_files():
-            include_directories.append('$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>')
-
-        include_directories.append('$<INSTALL_INTERFACE:include>')
-
-        targeted_section_check(package.cmake, 'target_include_directories', 'PUBLIC', include_directories,
-                               SectionStyle(name_val_sep='\n  ', val_sep='\n  '))
 
 
 @roscompile
