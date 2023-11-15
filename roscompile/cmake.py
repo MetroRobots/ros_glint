@@ -1,7 +1,6 @@
-from ros_introspection.cmake import Command, CommandGroup, SectionStyle
+from ros_introspection.cmake import Command, CommandGroup
 from ros_introspection.resource_list import is_message, is_service
 from ros_introspection.source_code_file import CPLUS, CPLUS2
-from clean_ros.cleaners.cmake import targeted_section_check
 
 
 from .util import get_config, roscompile
@@ -130,22 +129,6 @@ def remove_old_style_cpp_dependencies(package):
 
 
 @roscompile
-def target_catkin_libraries(package):
-    if not package.cmake:
-        return
-
-    if package.ros_version == 1:
-        deps = ['${catkin_LIBRARIES}']
-        command = 'target_link_libraries'
-        style = None
-    else:
-        deps = sorted(package.get_build_dependencies())
-        command = 'ament_target_dependencies'
-        style = SectionStyle(prename='', val_sep='\n  ')
-    targeted_section_check(package.cmake, command, '', deps, style)
-
-
-@roscompile
 def check_generators(package):
     if package.ros_version == 1:
         for cmd in package.cmake.content_map['catkin_package']:
@@ -153,14 +136,6 @@ def check_generators(package):
             if 'message_generation' in section.values:
                 section.values.remove('message_generation')
                 cmd.changed = True
-
-
-@roscompile
-def check_library_setup(package):
-    if not package.cmake:
-        return
-    if package.build_type == 'catkin':
-        package.cmake.section_check(package.cmake.get_libraries(), 'catkin_package', 'LIBRARIES')
 
 
 def alphabetize_sections_helper(cmake):

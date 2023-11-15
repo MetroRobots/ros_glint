@@ -86,7 +86,7 @@ def get_command_section(cmake, cmd_name, section_name):
 
 def ensure_section_values(cmake, section, items, alpha_order=True, ignore_quoting=False):
     """Ensure the CMake command with the given section has all of the values in items."""
-    existing = cmake.resolve_variables(section.values)
+    existing = cmake.resolve_variables(section.values, error_on_missing=False)
 
     needed_items = []
     for item in items:
@@ -157,7 +157,7 @@ def targeted_section_check(cmake_file, cmd_name, section_name, items, style=None
             section = cmd.get_section(section_name)
             if style:
                 section.style = style
-            cmake_file.changed |= cmake.ensure_section_values(cmd, section, items, alpha_order=False)
+            cmake_file.changed |= ensure_section_values(cmake, section, items, alpha_order=False)
 
 
 def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
@@ -305,3 +305,32 @@ def check_includes(package):
                                SectionStyle(name_val_sep='\n  ', val_sep='\n  '))
 
     package.cmake.changed |= changed
+
+
+@clean_ros
+def target_catkin_libraries(package):
+    if not package.cmake:
+        return
+
+    if package.ros_version == 1:
+        deps = ['${catkin_LIBRARIES}']
+        command = 'target_link_libraries'
+        style = None
+    else:
+        deps = sorted(package.get_dependencies(DependencyType.BUILD))
+        command = 'ament_target_dependencies'
+        style = SectionStyle(prename='', val_sep='\n  ')
+    targeted_section_check(package.cmake, command, '', deps, style)
+
+
+@clean_ros
+def check_library_setup(package):
+    if not package.cmake:
+        return
+    if package.ros_version != 1:
+        return
+
+    package.cmake.changed |= section_check(package.cmake.contents,
+                                           package.cmake.get_libraries(),
+                                           'catkin_package',
+                                           'LIBRARIES')
