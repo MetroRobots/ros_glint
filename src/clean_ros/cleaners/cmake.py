@@ -1,6 +1,7 @@
 import re
 
 from ..core import clean_ros
+from ..cmake_ordering import insert_in_order
 from ..util import get_ignore_data
 
 from ros_introspect.package import DependencyType
@@ -102,7 +103,7 @@ def ensure_section_values(cmake, section, items, alpha_order=True, ignore_quotin
 
     if needed_items:
         section.add_values(needed_items, alpha_order)
-        # section.parent.changed = True
+        section.parent.changed = True
         return True
     return False
 
@@ -121,7 +122,7 @@ def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alph
             cmd = cmake.content_map[cmd_name][0]
         else:
             cmd = Command(cmd_name)
-            cmake.insert(cmd)
+            insert_in_order(cmake, cmd)
             changed = True
 
     if section is None:
@@ -180,7 +181,7 @@ def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
             cmd = Command('find_package')
             cmd.add_section('', [pkg])
             cmd.add_section('REQUIRED')
-            cmake.insert(cmd)
+            insert_in_order(cmake, cmd)
 
 
 @clean_ros
@@ -193,12 +194,9 @@ def check_cmake_dependencies(package):
 
 @clean_ros
 def check_generators(package):
-    if not package.cmake or not package.defines_ros_interfaces:
+    all_interfaces = package.get_ros_interfaces()
+    if not package.cmake or not all_interfaces:
         return
-
-    all_interfaces = []
-    for interferface_defs in [package.messages, package.services, package.actions]:
-        all_interfaces += interferface_defs
 
     cmake = package.cmake.contents
     if package.ros_version == 1:
