@@ -2,10 +2,10 @@ import collections
 import fnmatch
 import os
 
-from ros_introspection.cmake import Command, SectionStyle
+from ros_introspection.cmake import Command
 from ros_introspection.setup_py import create_setup_py
+from clean_ros.cleaners.cmake import check_complex_section, get_multiword_section
 
-from .cmake import NEWLINE_PLUS_8
 from .util import roscompile
 
 FILES_TO_NOT_INSTALL = ['CHANGELOG.rst', 'README.md', '.travis.yml', 'bitbucket-pipelines.yml', 'setup.cfg',
@@ -75,56 +75,12 @@ def get_install_types(cmd, subfolder=''):
     return types
 
 
-def get_multiword_section(cmd, words):
-    """Find a section that matches the last word, assuming all the previous sections matched the other words.
-
-    Our definition of a CMake command section is ONE all-caps word followed by tokens.
-    Installing stuff requires these weird TWO word sections (i.e. ARCHIVE DESTINATION).
-
-    Ergo, we need to find the section that matches the second word, presuming the section
-    before matched the first word.
-    """
-    i = 0
-    for section in cmd.get_real_sections():
-        if section.name == words[i]:
-            # One word matches
-            if i < len(words) - 1:
-                # If there are more words, increment the counter
-                i += 1
-            else:
-                # Otherwise, we matched all the words. Return this section
-                return section
-        else:
-            # If the word doesn't match, we need to start searching from the first word again
-            i = 0
-
-
 def matches_patterns(item, patterns):
     for pattern in patterns:
         if pattern[0] == pattern[-1] and pattern[0] == '"':
             pattern = pattern[1:-1]
         if fnmatch.fnmatch(item, pattern):
             return True
-
-
-def check_complex_section(cmd, key, value):
-    """Find the section matching the key and ensure the value is in it.
-
-    Key could be multiple words, see get_multiword_section.
-    If the appropriate section is not found, it adds it.
-    """
-    words = key.split()
-    if len(words) == 1:
-        section = cmd.get_section(key)
-    else:
-        section = get_multiword_section(cmd, words)
-
-    if section:
-        if value not in section.values:
-            section.add(value)
-            cmd.changed = True
-    else:
-        cmd.add_section(key, [value], SectionStyle(NEWLINE_PLUS_8))
 
 
 def install_sections(cmd, destination_map, subfolder=''):

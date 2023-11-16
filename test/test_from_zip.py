@@ -63,7 +63,7 @@ def run_case(test_config, cases):
         for function_name in test_config['functions']:
             assert function_name in cleaner_functions, f'Missing rule: {function_name}'
             if function_name not in cleaner_functions:
-                continue
+                return
             fne = cleaner_functions[function_name]
             if 'config' in inspect.getfullargspec(fne).args:
                 fne(pp, config=local_config)

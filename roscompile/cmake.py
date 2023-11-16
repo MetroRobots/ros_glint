@@ -1,13 +1,12 @@
 from ros_introspection.cmake import Command, CommandGroup
 from ros_introspection.resource_list import is_message, is_service
 from ros_introspection.source_code_file import CPLUS, CPLUS2
+from clean_ros.cleaners.cmake import NEWLINE_PLUS_4, NEWLINE_PLUS_8
 
 
 from .util import get_config, roscompile
 
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
-NEWLINE_PLUS_4 = '\n    '
-NEWLINE_PLUS_8 = '\n        '
 CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
 
 

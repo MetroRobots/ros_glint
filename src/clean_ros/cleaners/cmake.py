@@ -7,6 +7,8 @@ from ..util import get_ignore_data
 from ros_introspect.package import DependencyType
 from stylish_cmake_parser import Command, CommandGroup, SectionStyle
 ALL_SPACES = re.compile(r' +')
+NEWLINE_PLUS_4 = '\n    '
+NEWLINE_PLUS_8 = '\n        '
 
 
 def remove_empty_strings(a):
@@ -158,6 +160,50 @@ def targeted_section_check(cmake_file, cmd_name, section_name, items, style=None
             if style:
                 section.style = style
             cmake_file.changed |= ensure_section_values(cmake, section, items, alpha_order=False)
+
+
+def get_multiword_section(cmd, words):
+    """Find a section that matches the last word, assuming all the previous sections matched the other words.
+
+    Our definition of a CMake command section is ONE all-caps word followed by tokens.
+    Installing stuff requires these weird TWO word sections (i.e. ARCHIVE DESTINATION).
+
+    Ergo, we need to find the section that matches the second word, presuming the section
+    before matched the first word.
+    """
+    i = 0
+    for section in cmd.get_real_sections():
+        if section.name == words[i]:
+            # One word matches
+            if i < len(words) - 1:
+                # If there are more words, increment the counter
+                i += 1
+            else:
+                # Otherwise, we matched all the words. Return this section
+                return section
+        else:
+            # If the word doesn't match, we need to start searching from the first word again
+            i = 0
+
+
+def check_complex_section(cmd, key, value):
+    """Find the section matching the key and ensure the value is in it.
+
+    Key could be multiple words, see get_multiword_section.
+    If the appropriate section is not found, it adds it.
+    """
+    words = key.split()
+    if len(words) == 1:
+        section = cmd.get_section(key)
+    else:
+        section = get_multiword_section(cmd, words)
+
+    if section:
+        if value not in section.values:
+            section.add(value)
+            cmd.changed = True
+    else:
+        cmd.add_section(key, [value], SectionStyle(NEWLINE_PLUS_8))
 
 
 def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):

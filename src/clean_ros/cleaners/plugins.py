@@ -4,8 +4,7 @@ import re
 from ros_introspect.components.plugin_xml import PluginXML
 
 from ..core import clean_ros
-from .cmake import install_cmake_dependencies, section_check
-from .installs import check_complex_section
+from .cmake import install_cmake_dependencies, section_check, check_complex_section
 
 PLUGIN_PATTERN = r'PLUGINLIB_EXPORT_CLASS\(([^:]+)::([^,]+),\s*([^:]+)::([^,]+)\)'
 PLUGIN_RE = re.compile(PLUGIN_PATTERN)

@@ -82,13 +82,6 @@ def update_metapackage(package, require_matching_name=False):
 
 
 @roscompile
-def misc_xml_formatting(package):
-    package.manifest.changed = True
-    for config in package.plugin_configs:
-        config.changed = True
-
-
-@roscompile
 def clean_up_rviz_configs(package):
     for rviz_config in package.rviz_configs:
         # print("\tCleaning up " + str(rviz_config))
