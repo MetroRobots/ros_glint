@@ -1,8 +1,6 @@
 import collections
-import os
 
 from ros_introspection.setup_py import create_setup_py
-from clean_ros.cleaners.cmake_installs import install_section_check
 
 from .util import roscompile
 
@@ -13,17 +11,7 @@ FILES_TO_NOT_INSTALL = ['CHANGELOG.rst', 'README.md', '.travis.yml', 'bitbucket-
 @roscompile
 def update_misc_installs(package):
     extra_files_by_folder = collections.defaultdict(list)
-    rel_paths = [obj.rel_fn for obj in package.launches + package.plugin_configs + package.urdf_files]
-    rel_paths += package.misc_files
-    for rel_path in sorted(rel_paths):
-        if rel_path in FILES_TO_NOT_INSTALL:
-            continue
-        path, base = os.path.split(rel_path)
-        extra_files_by_folder[path].append(base)
-    if package.cmake:
-        for folder, files in sorted(extra_files_by_folder.items()):
-            install_section_check(package.cmake, files, 'misc', catkin=package.build_type == 'catkin', subfolder=folder)
-    else:
+    if not package.cmake:
         if package.setup_py is None:
             create_setup_py(package)
 

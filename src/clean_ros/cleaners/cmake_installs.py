@@ -228,3 +228,23 @@ def update_cplusplus_installs(package):
                 cmake, ['include/'], InstallType.HEADERS, package.ros_version, directory=True)
 
     package.cmake.changed |= changed
+
+
+@clean_ros
+def update_misc_installs(package):
+    extra_files_by_folder = collections.defaultdict(list)
+
+    for rel_fn, package_file in package.components_by_name.items():
+        if package_file.__class__.needs_share_installation():
+            extra_files_by_folder[rel_fn.parent].append(str(rel_fn.name))
+
+    if package.cmake:
+        changed = False
+        for folder, files in sorted(extra_files_by_folder.items()):
+            subfolder = str(folder)
+            if subfolder == '.':
+                subfolder = ''
+
+            changed |= install_section_check(
+                package.cmake.contents, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
+        package.cmake.changed |= changed
