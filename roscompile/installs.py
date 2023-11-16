@@ -4,8 +4,7 @@ from ros_introspection.setup_py import create_setup_py
 
 from .util import roscompile
 
-FILES_TO_NOT_INSTALL = ['CHANGELOG.rst', 'README.md', '.travis.yml', 'bitbucket-pipelines.yml', 'setup.cfg',
-                        '.pre-commit-config.yaml', 'LICENSE', 'LICENSE.txt']
+FILES_TO_NOT_INSTALL = ['LICENSE', 'LICENSE.txt']
 
 
 @roscompile

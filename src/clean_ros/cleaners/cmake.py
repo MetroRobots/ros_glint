@@ -23,7 +23,7 @@ def remove_cmake_command_comments_helper(command, ignorables, replacement=''):
             continue
         for ignorable in ignorables:
             while ignorable in command.sections[i]:
-                command.changed = True
+                command.mark_changed()
                 command.sections[i] = command.sections[i].replace(ignorable, replacement)
     if command.changed:
         command.sections = remove_empty_strings(command.sections)
@@ -32,7 +32,6 @@ def remove_cmake_command_comments_helper(command, ignorables, replacement=''):
 
 
 def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
-    changed = False
     # Remove Raw Strings
     for ignorable in ignorables:
         while ignorable in cmake.contents:
@@ -43,11 +42,11 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
                 if isinstance(one_before, str) and isinstance(two_before, str):
                     if ALL_SPACES.match(one_before) and two_before[-1] == '\n':
                         cmake.contents = cmake.contents[:i - 1] + cmake.contents[i + 1:]
-                        changed = True
+                        cmake.mark_changed()
                         continue
 
             cmake.contents = cmake.contents[:i] + cmake.contents[i + 1:]
-            changed = True
+            cmake.mark_changed()
 
     # Remove from Commands/CommandGroups
     for content in cmake.contents:
@@ -56,7 +55,6 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
         elif isinstance(content, CommandGroup):
             remove_cmake_comments_helper(content.contents, ignorables, replacement)
     cmake.contents = remove_empty_strings(cmake.contents)
-    return changed
 
 
 @clean_ros
@@ -64,7 +62,6 @@ def remove_empty_cmake_lines(package):
     cmake = package.cmake
     for i, content in enumerate(cmake.contents[:-2]):
         if str(content)[-1] == '\n' and cmake.contents[i + 1] == '\n' and cmake.contents[i + 2] == '\n':
-            package.cmake.changed = True
             cmake.contents[i + 1] = ''
     cmake.contents = remove_empty_strings(cmake.contents)
 
@@ -75,8 +72,7 @@ def remove_boilerplate_cmake_comments(package):
         return
 
     ignorables = get_ignore_data('cmake', {'package': package.name})
-    if remove_cmake_comments_helper(package.cmake, ignorables):
-        package.cmake.changed = True
+    remove_cmake_comments_helper(package.cmake, ignorables)
     remove_empty_cmake_lines(package)
 
 
@@ -107,17 +103,15 @@ def ensure_section_values(cmake, section, items, alpha_order=True, ignore_quotin
 
     if needed_items:
         section.add_values(needed_items, alpha_order)
-        section.parent.changed = True
         return True
     return False
 
 
 def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alpha_order=True, ignore_quoting=False):
     """Ensure there's a CMake command of the given type with the given section name and items."""
-    changed = False
 
     if len(items) == 0 and not zero_okay:
-        return changed
+        return
 
     section = get_command_section(cmake, cmd_name, section_name)
 
@@ -125,16 +119,14 @@ def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alph
         if cmake.content_map[cmd_name]:
             cmd = cmake.content_map[cmd_name][0]
         else:
-            cmd = Command(cmd_name)
+            cmd = Command(cmd_name, parent=cmake)
             insert_in_order(cmake, cmd)
-            changed = True
 
     if section is None:
         cmd.add_section(section_name, sorted(items))
-        changed = True
     else:
-        changed |= ensure_section_values(cmake, section, items, alpha_order, ignore_quoting)
-    return changed
+        ensure_section_values(cmake, section, items, alpha_order, ignore_quoting)
+    return
 
 
 def targeted_section_check(cmake, cmd_name, section_name, items, style=None):
@@ -147,19 +139,18 @@ def targeted_section_check(cmake, cmd_name, section_name, items, style=None):
     for target in cmake.get_libraries() + cmake.get_executables():
         cmd = get_targeted_command(target)
         if cmd is None:
-            cmd = Command(cmd_name)
+            cmd = Command(cmd_name, parent=cmake)
             if section_name:
                 cmd.add_section('', [target])
                 cmd.add_section(section_name, items, style)
             else:
                 cmd.add_section(section_name, [target] + items, style)
             insert_in_order(cmake, cmd)
-            cmake.changed = True
         else:
             section = cmd.get_section(section_name)
             if style:
                 section.style = style
-            cmake.changed |= ensure_section_values(cmake, section, items, alpha_order=False)
+            ensure_section_values(cmake, section, items, alpha_order=False)
 
 
 def get_multiword_section(cmd, words):
@@ -201,7 +192,6 @@ def check_complex_section(cmd, key, value):
     if section:
         if value not in section.values:
             section.add(value)
-            cmd.changed = True
     else:
         cmd.add_section(key, [value], SectionStyle(NEWLINE_PLUS_8))
 
@@ -213,12 +203,11 @@ def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
     cmake = package.cmake
     if package.ros_version == 1:
         if len(cmake.content_map['find_package']) == 0:
-            cmd = Command('find_package')
+            cmd = Command('find_package', parent=cmake)
             # TODO: Standard indentation
             cmd.add_section('', ['catkin'])
             cmd.add_section('REQUIRED')
             cmake.add_command(cmd)
-            package.cmake.changed = True
 
         for cmd in cmake.content_map['find_package']:
             tokens = cmd.get_tokens()
@@ -233,29 +222,23 @@ def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
                 section = req_sec  # Allow packages to be listed without COMPONENTS keyword
             if section is None:
                 cmd.add_section('COMPONENTS', sorted(dependencies))
-                package.cmake.changed = True
             else:
                 existing = cmake.resolve_variables(section.values)
                 needed_items = dependencies - set(existing)
                 if needed_items:
                     section.add_values(needed_items)
-                    cmd.changed = True
-                    package.cmake.changed = True
         if check_catkin_pkg:
-            ret = section_check(cmake, dependencies, 'catkin_package', 'CATKIN_DEPENDS')
-            if ret:
-                package.cmake.changed = True
+            section_check(cmake, dependencies, 'catkin_package', 'CATKIN_DEPENDS')
     else:
         existing = set()
         for cmd in cmake.content_map['find_package']:
             existing.update(cmd.get_tokens())
 
         for pkg in sorted(dependencies - existing):
-            cmd = Command('find_package')
+            cmd = Command('find_package', parent=cmake)
             cmd.add_section('', [pkg])
             cmd.add_section('REQUIRED')
             insert_in_order(cmake, cmd)
-            package.cmake.changed = True
 
 
 @clean_ros
@@ -273,44 +256,36 @@ def check_generators(package):
         return
 
     cmake = package.cmake
-    changed = False
     if package.ros_version == 1:
-        changed |= section_check(cmake, [m.fn for m in package.messages],
-                                 'add_message_files', 'FILES')
-        changed |= section_check(cmake, [s.fn for s in package.services],
-                                 'add_service_files', 'FILES')
-        changed |= section_check(cmake, [a.fn for a in package.actions],
-                                 'add_action_files', 'FILES')
-        changed |= section_check(cmake, ['message_generation'], 'find_package', 'COMPONENTS')
-        changed |= section_check(cmake, ['message_runtime'], 'catkin_package', 'CATKIN_DEPENDS')
+        section_check(cmake, [m.fn for m in package.messages], 'add_message_files', 'FILES')
+        section_check(cmake, [s.fn for s in package.services], 'add_service_files', 'FILES')
+        section_check(cmake, [a.fn for a in package.actions], 'add_action_files', 'FILES')
+        section_check(cmake, ['message_generation'], 'find_package', 'COMPONENTS')
+        section_check(cmake, ['message_runtime'], 'catkin_package', 'CATKIN_DEPENDS')
 
         generate_cmd = 'generate_messages'
     else:
         generate_cmd = 'rosidl_generate_interfaces'
 
         if not cmake.content_map[generate_cmd]:
-            cmd = Command('rosidl_generate_interfaces')
+            cmd = Command('rosidl_generate_interfaces', parent=cmake)
             cmd.add_section('${PROJECT_NAME}')
             insert_in_order(cmake, cmd)
-            package.cmake.changed = True
 
         rel_fns = [str(ros_interface.rel_fn) for ros_interface in all_interfaces]
-        changed |= section_check(cmake, rel_fns, generate_cmd, '', ignore_quoting=True)
+        section_check(cmake, rel_fns, generate_cmd, '', ignore_quoting=True)
 
         install_cmake_dependencies(package, {'rosidl_default_generators'})
-        changed |= section_check(cmake, ['rosidl_default_runtime'], 'ament_export_dependencies', '')
+        section_check(cmake, ['rosidl_default_runtime'], 'ament_export_dependencies', '')
 
     msg_deps = set()
     for ros_interface in all_interfaces:
         msg_deps |= ros_interface.get_dependencies(DependencyType.BUILD)
 
     if msg_deps:
-        changed |= section_check(cmake, msg_deps, generate_cmd, 'DEPENDENCIES', zero_okay=True)
+        section_check(cmake, msg_deps, generate_cmd, 'DEPENDENCIES', zero_okay=True)
     else:
-        changed |= section_check(cmake, msg_deps, generate_cmd, zero_okay=True)
-
-    if changed:
-        package.cmake.changed = True
+        section_check(cmake, msg_deps, generate_cmd, zero_okay=True)
 
 
 @clean_ros
@@ -324,16 +299,14 @@ def check_includes(package):
     if not has_cpp:
         return
 
-    changed = False
     cmake = package.cmake
 
     if package.ros_version == 1:
         if has_header_files:
-            changed |= section_check(cmake, ['include'], 'catkin_package', 'INCLUDE_DIRS')
-            changed |= section_check(cmake, ['include'], 'include_directories', alpha_order=False)
+            section_check(cmake, ['include'], 'catkin_package', 'INCLUDE_DIRS')
+            section_check(cmake, ['include'], 'include_directories', alpha_order=False)
 
-        changed |= section_check(cmake, ['${catkin_INCLUDE_DIRS}'], 'include_directories', alpha_order=False)
-
+        section_check(cmake, ['${catkin_INCLUDE_DIRS}'], 'include_directories', alpha_order=False)
     else:
         include_directories = []
         if has_header_files:
@@ -343,8 +316,6 @@ def check_includes(package):
 
         targeted_section_check(package.cmake, 'target_include_directories', 'PUBLIC', include_directories,
                                SectionStyle(name_val_sep='\n  ', val_sep='\n  '))
-
-    package.cmake.changed |= changed
 
 
 @clean_ros
@@ -370,10 +341,8 @@ def check_library_setup(package):
     if package.ros_version != 1:
         return
 
-    package.cmake.changed |= section_check(package.cmake,
-                                           package.cmake.get_libraries(),
-                                           'catkin_package',
-                                           'LIBRARIES')
+    section_check(package.cmake, package.cmake.get_libraries(),
+                  'catkin_package', 'LIBRARIES')
 
 
 def get_target_build_rules(cmake):
@@ -448,26 +417,20 @@ def check_exported_dependencies(package):
         add_add_deps = False
 
         if add_deps is None:
-            add_deps = Command('add_dependencies')
+            add_deps = Command('add_dependencies', parent=cmake)
             add_add_deps = True  # Need to wait to add the command for proper sorting
 
         if len(add_deps.sections) == 0:
             add_deps.add_section('', [target])
-            add_deps.changed = True
-            package.cmake.changed = True
 
         section = add_deps.sections[0]
         if cat_depend and '${catkin_EXPORTED_TARGETS}' not in section.values:
             section.add('${catkin_EXPORTED_TARGETS}')
-            add_deps.changed = True
-            package.cmake.changed = True
         if self_depend:
             tokens = [cmake.resolve_variables(s, error_on_missing=False) for s in section.values]
             key = '${%s_EXPORTED_TARGETS}' % package.name
             if key not in tokens:
                 section.add(key)
-                add_deps.changed = True
-                package.cmake.changed = True
 
         if add_add_deps:
             insert_in_order(cmake, add_deps)

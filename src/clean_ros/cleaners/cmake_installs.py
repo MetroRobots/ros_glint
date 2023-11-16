@@ -124,7 +124,7 @@ def remove_install_section(cmd, destination_map):
     if len(to_remove) > 0:
         for section in to_remove:
             cmd.sections.remove(section)
-        cmd.changed = True
+        cmd.mark_changed()
 
 
 def get_commands_by_type(cmake, name, subfolder=''):
@@ -158,13 +158,12 @@ def install_section_check(cmake, items, install_type, ros_version, directory=Fal
                 cmake.remove_command(cmd)
             else:
                 remove_install_section(cmd, install_config.destination_map)
-        return True
 
     cmd = None
     items = [os.path.join(subfolder, item) for item in items]
     for cmd in cmds:
         if directory_matches(cmd, subfolder):
-            return False
+            return
         install_sections(cmd, install_config.destination_map, subfolder)
         section = cmd.get_section(section_name)
         if not section:
@@ -185,25 +184,22 @@ def install_section_check(cmake, items, install_type, ros_version, directory=Fal
             items = [item for item in items if item not in section.values]
 
     if len(items) == 0:
-        return False
+        return
 
     if cmd is None:
-        cmd = Command('install')
+        cmd = Command('install', parent=cmake)
         cmd.add_section(section_name, items)
         insert_in_order(cmake, cmd)
         install_sections(cmd, install_config.destination_map, subfolder)
     elif section:
         # section = cmd.get_section(section_name)
-        section.values += items
-        cmd.changed = True
+        section.add_values(items, alpha_order=False)
 
     if subfolder and len(str(cmd)) > 120 and section_name == 'FILES':
         section = cmd.get_section(section_name)
         section.name = 'DIRECTORY'
         section.values = [subfolder + '/']
-        cmd.changed = True
-
-    return True
+        section.mark_changed()
 
 
 @clean_ros
@@ -211,23 +207,20 @@ def update_cplusplus_installs(package):
     if not package.cmake:
         return
     cmake = package.cmake
-    changed = install_section_check(cmake, package.cmake.get_executables(), InstallType.EXECUTABLE, package.ros_version)
-    changed |= install_section_check(cmake, package.cmake.get_libraries(), InstallType.LIBRARY, package.ros_version)
+    install_section_check(cmake, package.cmake.get_executables(), InstallType.EXECUTABLE, package.ros_version)
+    install_section_check(cmake, package.cmake.get_libraries(), InstallType.LIBRARY, package.ros_version)
 
     has_header_files = any('header' in source_file.tags for source_file in package.source_code)
     if package.name and has_header_files:
         if package.ros_version == 1:
-            changed |= install_section_check(
-                cmake, ['include/${PROJECT_NAME}/'], InstallType.HEADERS, package.ros_version, directory=True)
+            install_section_check(cmake, ['include/${PROJECT_NAME}/'], InstallType.HEADERS, package.ros_version,
+                                  directory=True)
         else:
             if not cmake.content_map['ament_export_include_directories']:
-                cmd = Command('ament_export_include_directories')
+                cmd = Command('ament_export_include_directories', parent=cmake)
                 cmd.add_section('', ['include'])
                 insert_in_order(cmake, cmd)
-            changed |= install_section_check(
-                cmake, ['include/'], InstallType.HEADERS, package.ros_version, directory=True)
-
-    package.cmake.changed |= changed
+            install_section_check(cmake, ['include/'], InstallType.HEADERS, package.ros_version, directory=True)
 
 
 @clean_ros
@@ -239,12 +232,10 @@ def update_misc_installs(package):
             extra_files_by_folder[rel_fn.parent].append(str(rel_fn.name))
 
     if package.cmake:
-        changed = False
         for folder, files in sorted(extra_files_by_folder.items()):
             subfolder = str(folder)
             if subfolder == '.':
                 subfolder = ''
 
-            changed |= install_section_check(
+            install_section_check(
                 package.cmake, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
-        package.cmake.changed |= changed

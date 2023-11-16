@@ -109,7 +109,7 @@ def check_plugins(package):
                     if plugin_xml.rel_fn not in defined_plugins[pkg2]:
                         add_to_package_xml(package.package_xml, plugin_xml, pkg2)
                 else:
-                    section_check(package.cmake.contents, [pkg2, str(plugin_xml.rel_fn)],
+                    section_check(package.cmake, [pkg2, str(plugin_xml.rel_fn)],
                                   'pluginlib_export_plugin_description_file',
                                   '')
 
@@ -121,8 +121,8 @@ def check_plugins(package):
 
         if package.ros_version > 1:
             exported_library = f'export_{library}'
-            section_check(package.cmake.contents, [exported_library], 'ament_export_targets')
-            for cmd in package.cmake.contents.content_map['install']:
+            section_check(package.cmake, [exported_library], 'ament_export_targets')
+            for cmd in package.cmake.content_map['install']:
                 targets = cmd.get_section('TARGETS')
                 if not targets or library not in targets.values:
                     continue
