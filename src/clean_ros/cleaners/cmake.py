@@ -5,6 +5,8 @@ from ..cmake_ordering import insert_in_order
 from ..util import get_ignore_data
 
 from ros_introspect.package import DependencyType
+from ros_introspect.components.source_code import CPP_INCLUDE1, CPP_INCLUDE2
+from ros_introspect.ros_resources import ROSResources
 from stylish_cmake_parser import Command, CommandGroup, SectionStyle
 ALL_SPACES = re.compile(r' +')
 NEWLINE_PLUS_4 = '\n    '
@@ -380,3 +382,100 @@ def check_library_setup(package):
                                            package.cmake.get_libraries(),
                                            'catkin_package',
                                            'LIBRARIES')
+
+
+def get_target_build_rules(cmake):
+    targets = {}
+    targets.update(cmake.get_build_rules('add_library'))
+    targets.update(cmake.get_build_rules('add_executable'))
+    return targets
+
+
+def get_msg_dependencies_from_source(package, sources):
+    resources = ROSResources()
+    deps = set()
+    for rel_fn in sources:
+        srcs = [sc for sc in package.source_code if str(sc.rel_fn) == rel_fn]
+        if not srcs:
+            continue
+        src = srcs[0]
+        for pkg, name in src.search_lines_for_pattern(CPP_INCLUDE1):
+            if len(name) == 0 or name[-2:] != '.h':
+                continue
+            name = name.replace('.h', '')
+            if resources.is_message(pkg, name) or resources.is_service(pkg, name):
+                deps.add(pkg)
+            elif pkg == package.name and any(name == ros_int.name for ros_int in package.get_ros_interfaces()):
+                deps.add(pkg)
+        for pkg, gen_type, name in src.search_lines_for_pattern(CPP_INCLUDE2):
+            if gen_type == 'msg' or gen_type == 'srv':
+                deps.add(pkg)
+    if package.dynamic_reconfig:
+        deps.add(package.name)
+    return sorted(deps)
+
+
+def get_matching_add_depends(cmake, search_target):
+    valid_targets = {search_target}
+    alt_target = cmake.resolve_variables(search_target)
+    if alt_target != search_target:
+        valid_targets.add(alt_target)
+
+    for cmd in cmake.content_map['add_dependencies']:
+        target = cmd.first_token()
+        if target in valid_targets:
+            return cmd
+        resolved_target = cmake.resolve_variables(target)
+        if resolved_target in valid_targets:
+            return cmd
+
+
+@clean_ros
+def check_exported_dependencies(package):
+    if not package.cmake:
+        return
+    cmake = package.cmake.contents
+    targets = get_target_build_rules(cmake)
+
+    for target, sources in targets.items():
+        deps = get_msg_dependencies_from_source(package, sources)
+        if len(deps) == 0:
+            continue
+
+        if package.name in deps:
+            self_depend = True
+            if len(deps) == 1:
+                cat_depend = False
+            else:
+                cat_depend = True
+        else:
+            self_depend = False
+            cat_depend = True
+
+        add_deps = get_matching_add_depends(package.cmake.contents, target)
+        add_add_deps = False
+
+        if add_deps is None:
+            add_deps = Command('add_dependencies')
+            add_add_deps = True  # Need to wait to add the command for proper sorting
+
+        if len(add_deps.sections) == 0:
+            add_deps.add_section('', [target])
+            add_deps.changed = True
+            package.cmake.changed = True
+
+        section = add_deps.sections[0]
+        if cat_depend and '${catkin_EXPORTED_TARGETS}' not in section.values:
+            section.add('${catkin_EXPORTED_TARGETS}')
+            add_deps.changed = True
+            package.cmake.changed = True
+        if self_depend:
+            tokens = [cmake.resolve_variables(s, error_on_missing=False) for s in section.values]
+            key = '${%s_EXPORTED_TARGETS}' % package.name
+            if key not in tokens:
+                section.add(key)
+                add_deps.changed = True
+                package.cmake.changed = True
+
+        if add_add_deps:
+            insert_in_order(cmake, add_deps)

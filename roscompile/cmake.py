@@ -1,102 +1,12 @@
 from ros_introspection.cmake import Command, CommandGroup
-from ros_introspection.resource_list import is_message, is_service
-from ros_introspection.source_code_file import CPLUS, CPLUS2
 from clean_ros.cleaners.cmake import NEWLINE_PLUS_4, NEWLINE_PLUS_8
+from clean_ros.cleaners.cmake import get_matching_add_depends, check_exported_dependencies
 
 
 from .util import get_config, roscompile
 
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
-
-
-def get_matching_add_depends(cmake, search_target):
-    valid_targets = {search_target}
-    alt_target = cmake.resolve_variables(search_target)
-    if alt_target != search_target:
-        valid_targets.add(alt_target)
-
-    for cmd in cmake.content_map['add_dependencies']:
-        target = cmd.first_token()
-        if target in valid_targets:
-            return cmd
-        resolved_target = cmake.resolve_variables(target)
-        if resolved_target in valid_targets:
-            return cmd
-
-
-def match_generator_name(package, name):
-    for gen in package.get_all_generators():
-        if name == gen.base_name:
-            return gen
-
-
-def get_msg_dependencies_from_source(package, sources):
-    deps = set()
-    for rel_fn in sources:
-        if rel_fn not in package.source_code.sources:
-            continue
-        src = package.source_code.sources[rel_fn]
-        for pkg, name in src.search_lines_for_pattern(CPLUS):
-            if len(name) == 0 or name[-2:] != '.h':
-                continue
-            name = name.replace('.h', '')
-            if is_message(pkg, name) or is_service(pkg, name):
-                deps.add(pkg)
-            elif pkg == package.name and match_generator_name(package, name):
-                deps.add(pkg)
-        for pkg, gen_type, name in src.search_lines_for_pattern(CPLUS2):
-            if gen_type == 'msg' or gen_type == 'srv':
-                deps.add(pkg)
-    if package.dynamic_reconfigs:
-        deps.add(package.name)
-    return sorted(deps)
-
-
-@roscompile
-def check_exported_dependencies(package):
-    if not package.cmake:
-        return
-    targets = package.cmake.get_target_build_rules()
-    for target, sources in targets.items():
-        deps = get_msg_dependencies_from_source(package, sources)
-        if len(deps) == 0:
-            continue
-
-        if package.name in deps:
-            self_depend = True
-            if len(deps) == 1:
-                cat_depend = False
-            else:
-                cat_depend = True
-        else:
-            self_depend = False
-            cat_depend = True
-
-        add_deps = get_matching_add_depends(package.cmake, target)
-        add_add_deps = False
-
-        if add_deps is None:
-            add_deps = Command('add_dependencies')
-            add_add_deps = True  # Need to wait to add the command for proper sorting
-
-        if len(add_deps.sections) == 0:
-            add_deps.add_section('', [target])
-            add_deps.changed = True
-
-        section = add_deps.sections[0]
-        if cat_depend and '${catkin_EXPORTED_TARGETS}' not in section.values:
-            section.add('${catkin_EXPORTED_TARGETS}')
-            add_deps.changed = True
-        if self_depend:
-            tokens = [package.cmake.resolve_variables(s) for s in section.values]
-            key = '${%s_EXPORTED_TARGETS}' % package.name
-            if key not in tokens:
-                section.add(key)
-                add_deps.changed = True
-
-        if add_add_deps:
-            package.cmake.add_command(add_deps)
 
 
 def remove_pattern(section, pattern):

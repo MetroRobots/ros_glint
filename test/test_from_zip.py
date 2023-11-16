@@ -4,6 +4,7 @@ import pytest
 from clean_ros import get_functions
 from clean_ros.diff import files_match
 from zip_testing import get_test_cases
+from betsy_ros import ROSInterface
 
 from ros_introspect import Package, ROSResources
 
@@ -54,12 +55,14 @@ def run_case(test_config, cases):
         pp = Package(root)
         local_config = test_config.get('config', {})
 
-        manual_pkgs = []
-        for pkg in test_config.get('pkgs', []):
-            if pkg not in resources.packages:
-                manual_pkgs.append(pkg)
-                resources.packages.add(pkg)
+        # Initialize ROS Resources
+        resources.packages = set(test_config.get('pkgs', []))
+        resources.messages = set()
+        for msg in test_config.get('msgs', []):
+            parts = msg.split('/')
+            resources.messages.add(ROSInterface(parts[0], 'msg', parts[1]))
 
+        # Run Functions
         for function_name in test_config['functions']:
             assert function_name in cleaner_functions, f'Missing rule: {function_name}'
             if function_name not in cleaner_functions:
@@ -70,9 +73,6 @@ def run_case(test_config, cases):
             else:
                 fne(pp)
         pp.save()
-
-        for pkg in manual_pkgs:
-            resources.packages.remove(pkg)
 
         folder_diff = pkg_in.compare_filesets(pkg_out)
 
