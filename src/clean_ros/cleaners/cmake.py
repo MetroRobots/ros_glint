@@ -320,15 +320,9 @@ def check_includes(package):
     if not package.cmake:
         return
 
-    has_cpp = False
-    has_header_files = False
-    for source_file in package.source_code:
-        if source_file.language != 'c++':
-            continue
-        has_cpp = True
-        parts = source_file.rel_fn.parts
-        if len(parts) > 1 and parts[0] == 'include' and parts[1] == package.name:
-            has_header_files = True
+    has_cpp = any(source_file.language == 'c++' for source_file in package.source_code)
+    has_header_files = any('header' in source_file.tags for source_file in package.source_code)
+
     if not has_cpp:
         return
 
