@@ -86,7 +86,7 @@ def get_command_section(cmake, cmd_name, section_name):
 
 def ensure_section_values(cmake, section, items, alpha_order=True, ignore_quoting=False):
     """Ensure the CMake command with the given section has all of the values in items."""
-    existing = cmake.resolve_variables(section.values, error_on_missing=False)
+    existing = cmake.resolve_variables(section.values)
 
     needed_items = []
     for item in items:
@@ -427,10 +427,39 @@ def check_exported_dependencies(package):
         if cat_depend and '${catkin_EXPORTED_TARGETS}' not in section.values:
             section.add('${catkin_EXPORTED_TARGETS}')
         if self_depend:
-            tokens = [cmake.resolve_variables(s, error_on_missing=False) for s in section.values]
+            tokens = [cmake.resolve_variables(s) for s in section.values]
             key = '${%s_EXPORTED_TARGETS}' % package.name
+            print(tokens, key)
             if key not in tokens:
                 section.add(key)
 
         if add_add_deps:
             insert_in_order(cmake, add_deps)
+
+
+@clean_ros
+def remove_old_style_cpp_dependencies(package):
+    def remove_pattern(section, pattern):
+        prev_len = len(section.values)
+        section.values = [v for v in section.values if pattern not in v]
+        section.mark_changed()
+        return prev_len != len(section.values)
+
+    if not package.cmake:
+        return
+    global_changed = False
+    targets = get_target_build_rules(package.cmake)
+    for target in targets:
+        add_deps = get_matching_add_depends(package.cmake, target)
+        if add_deps is None or len(add_deps.sections) == 0:
+            continue
+
+        section = add_deps.sections[0]
+        changed = remove_pattern(section, '_generate_messages_cpp')
+        changed = remove_pattern(section, '_gencpp') or changed
+        changed = remove_pattern(section, '_gencfg') or changed
+        if changed:
+            add_deps.changed = True
+            global_changed = True
+    if global_changed:
+        check_exported_dependencies(package)

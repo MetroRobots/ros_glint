@@ -8,14 +8,13 @@ from .util import get_config, roscompile
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 
 
-def remove_pattern(section, pattern):
-    prev_len = len(section.values)
-    section.values = [v for v in section.values if pattern not in v]
-    return prev_len != len(section.values)
-
-
 @roscompile
 def remove_old_style_cpp_dependencies(package):
+    def remove_pattern(section, pattern):
+        prev_len = len(section.values)
+        section.values = [v for v in section.values if pattern not in v]
+        return prev_len != len(section.values)
+
     if not package.cmake:
         return
     global_changed = False
