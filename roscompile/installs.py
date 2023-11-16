@@ -1,24 +1,6 @@
-import collections
-
-from ros_introspection.setup_py import create_setup_py
-
-from .util import roscompile
-
 FILES_TO_NOT_INSTALL = ['LICENSE', 'LICENSE.txt']
 
 
-@roscompile
-def update_misc_installs(package):
-    extra_files_by_folder = collections.defaultdict(list)
-    if not package.cmake:
-        if package.setup_py is None:
-            create_setup_py(package)
-
-        for folder, files in sorted(extra_files_by_folder.items()):
-            package.setup_py.include_data_files(files, folder)
-
-
-@roscompile
 def fix_double_directory_installs(package):
     if not package.cmake:
         return

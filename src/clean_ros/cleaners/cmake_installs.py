@@ -5,6 +5,8 @@ import os.path
 
 from stylish_cmake_parser import Command
 
+from ros_introspect.components.setup_py import create_setup_py
+
 from ..core import clean_ros
 from ..cmake_ordering import insert_in_order
 from .cmake import check_complex_section, get_multiword_section
@@ -239,3 +241,9 @@ def update_misc_installs(package):
 
             install_section_check(
                 package.cmake, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
+    else:
+        if package.setup_py is None:
+            create_setup_py(package)
+
+        for folder, files in sorted(extra_files_by_folder.items()):
+            package.setup_py.include_data_files(files, folder)
