@@ -16,7 +16,7 @@ def check_dynamic_reconfigure(package):
 
     package.package_xml.add_dependencies({DependencyType.BUILD: pkg_list, DependencyType.RUN: pkg_list})
 
-    cmake = package.cmake.contents
+    cmake = package.cmake
     package.cmake.changed |= section_check(cmake, [str(cfg.rel_fn) for cfg in package.dynamic_reconfig],
                                            'generate_dynamic_reconfigure_options', '')
     package.cmake.changed |= section_check(cmake, pkg_list, 'find_package', 'COMPONENTS')

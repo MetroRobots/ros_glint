@@ -61,7 +61,7 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
 
 @clean_ros
 def remove_empty_cmake_lines(package):
-    cmake = package.cmake.contents
+    cmake = package.cmake
     for i, content in enumerate(cmake.contents[:-2]):
         if str(content)[-1] == '\n' and cmake.contents[i + 1] == '\n' and cmake.contents[i + 2] == '\n':
             package.cmake.changed = True
@@ -75,7 +75,7 @@ def remove_boilerplate_cmake_comments(package):
         return
 
     ignorables = get_ignore_data('cmake', {'package': package.name})
-    if remove_cmake_comments_helper(package.cmake.contents, ignorables):
+    if remove_cmake_comments_helper(package.cmake, ignorables):
         package.cmake.changed = True
     remove_empty_cmake_lines(package)
 
@@ -137,16 +137,14 @@ def section_check(cmake, items, cmd_name, section_name='', zero_okay=False, alph
     return changed
 
 
-def targeted_section_check(cmake_file, cmd_name, section_name, items, style=None):
-    cmake = cmake_file.contents
-
+def targeted_section_check(cmake, cmd_name, section_name, items, style=None):
     def get_targeted_command(target_name):
         for cmd in cmake.content_map[cmd_name]:
             tokens = cmd.get_tokens()
             if tokens and target_name == tokens[0]:
                 return cmd
 
-    for target in cmake_file.get_libraries() + cmake_file.get_executables():
+    for target in cmake.get_libraries() + cmake.get_executables():
         cmd = get_targeted_command(target)
         if cmd is None:
             cmd = Command(cmd_name)
@@ -156,12 +154,12 @@ def targeted_section_check(cmake_file, cmd_name, section_name, items, style=None
             else:
                 cmd.add_section(section_name, [target] + items, style)
             insert_in_order(cmake, cmd)
-            cmake_file.changed = True
+            cmake.changed = True
         else:
             section = cmd.get_section(section_name)
             if style:
                 section.style = style
-            cmake_file.changed |= ensure_section_values(cmake, section, items, alpha_order=False)
+            cmake.changed |= ensure_section_values(cmake, section, items, alpha_order=False)
 
 
 def get_multiword_section(cmd, words):
@@ -212,7 +210,7 @@ def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
     if not dependencies:
         return
 
-    cmake = package.cmake.contents
+    cmake = package.cmake
     if package.ros_version == 1:
         if len(cmake.content_map['find_package']) == 0:
             cmd = Command('find_package')
@@ -274,7 +272,7 @@ def check_generators(package):
     if not package.cmake or not all_interfaces:
         return
 
-    cmake = package.cmake.contents
+    cmake = package.cmake
     changed = False
     if package.ros_version == 1:
         changed |= section_check(cmake, [m.fn for m in package.messages],
@@ -327,7 +325,7 @@ def check_includes(package):
         return
 
     changed = False
-    cmake = package.cmake.contents
+    cmake = package.cmake
 
     if package.ros_version == 1:
         if has_header_files:
@@ -372,7 +370,7 @@ def check_library_setup(package):
     if package.ros_version != 1:
         return
 
-    package.cmake.changed |= section_check(package.cmake.contents,
+    package.cmake.changed |= section_check(package.cmake,
                                            package.cmake.get_libraries(),
                                            'catkin_package',
                                            'LIBRARIES')
@@ -428,7 +426,7 @@ def get_matching_add_depends(cmake, search_target):
 def check_exported_dependencies(package):
     if not package.cmake:
         return
-    cmake = package.cmake.contents
+    cmake = package.cmake
     targets = get_target_build_rules(cmake)
 
     for target, sources in targets.items():
@@ -446,7 +444,7 @@ def check_exported_dependencies(package):
             self_depend = False
             cat_depend = True
 
-        add_deps = get_matching_add_depends(package.cmake.contents, target)
+        add_deps = get_matching_add_depends(package.cmake, target)
         add_add_deps = False
 
         if add_deps is None:

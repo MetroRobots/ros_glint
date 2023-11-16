@@ -76,7 +76,7 @@ def check_plugins(package):
             existing_plugins[parent_pkg].append(xml)
 
     defined_plugins = get_plugin_xmls(package.package_xml)
-    build_rules = package.cmake.contents.get_build_rules('add_library', resolve_target_name=True)
+    build_rules = package.cmake.get_build_rules('add_library', resolve_target_name=True)
 
     def contains_library(xmls, library, pkg, name):
         for xml in xmls:

@@ -210,7 +210,7 @@ def install_section_check(cmake, items, install_type, ros_version, directory=Fal
 def update_cplusplus_installs(package):
     if not package.cmake:
         return
-    cmake = package.cmake.contents
+    cmake = package.cmake
     changed = install_section_check(cmake, package.cmake.get_executables(), InstallType.EXECUTABLE, package.ros_version)
     changed |= install_section_check(cmake, package.cmake.get_libraries(), InstallType.LIBRARY, package.ros_version)
 
@@ -246,5 +246,5 @@ def update_misc_installs(package):
                 subfolder = ''
 
             changed |= install_section_check(
-                package.cmake.contents, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
+                package.cmake, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
         package.cmake.changed |= changed
