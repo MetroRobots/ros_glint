@@ -210,7 +210,7 @@ def update_cplusplus_installs(package):
     install_section_check(cmake, package.cmake.get_executables(), InstallType.EXECUTABLE, package.ros_version)
     install_section_check(cmake, package.cmake.get_libraries(), InstallType.LIBRARY, package.ros_version)
 
-    has_header_files = any('header' in source_file.tags for source_file in package.source_code)
+    has_header_files = any(package.get_source_by_tags('header'))
     if package.name and has_header_files:
         if package.ros_version == 1:
             install_section_check(cmake, ['include/${PROJECT_NAME}/'], InstallType.HEADERS, package.ros_version,

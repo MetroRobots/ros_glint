@@ -1,12 +1,11 @@
 from ros_introspection.cmake import Command, CommandGroup
 from clean_ros.cleaners.cmake import NEWLINE_PLUS_4, NEWLINE_PLUS_8
 from clean_ros.cleaners.cmake import get_matching_add_depends, check_exported_dependencies
-
+from clean_ros.cleaners.python_setup import CATKIN_INSTALL_PYTHON_PRENAME
 
 from .util import get_config, roscompile
 
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
-CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
 
 
 def remove_pattern(section, pattern):

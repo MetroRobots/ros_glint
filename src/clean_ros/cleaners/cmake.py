@@ -294,7 +294,7 @@ def check_includes(package):
         return
 
     has_cpp = any(source_file.language == 'c++' for source_file in package.source_code)
-    has_header_files = any('header' in source_file.tags for source_file in package.source_code)
+    has_header_files = any(package.get_source_by_tags('header'))
 
     if not has_cpp:
         return
