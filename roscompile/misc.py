@@ -1,6 +1,5 @@
 import datetime
 import os
-import re
 import yaml
 
 from ros_introspection.package_structure import get_repo_root
@@ -10,41 +9,14 @@ from ros_introspection.resource_list import get_license_info
 from ros_introspection.util import get_sibling_packages, get_packages
 
 from .util import roscompile, roscompile_repo
-from .util import get_config, make_executable, get_license_key
+from .util import get_config, get_license_key
 
-MAINPAGE_S = r'/\*\*\s+\\mainpage\s+\\htmlinclude manifest.html\s+\\b %s\s+<!--\s+' + \
-             r'Provide an overview of your package.\s+-->\s+-->\s+[^\*]*\*/'
 
 RVIZ_CLASS_DEFAULTS = yaml.safe_load(open(get_package_file('roscompile', 'data/rviz_class_defaults.yaml')))
 RVIZ_GENERIC_DEFAULTS = yaml.safe_load(open(get_package_file('roscompile', 'data/rviz_generic_defaults.yaml')))
 RVIZ_GLOBAL_DEFAULTS = yaml.safe_load(open(get_package_file('roscompile', 'data/rviz_global_defaults.yaml')))
 ROBOT_MODEL_LINK_DEFAULTS = {'Alpha': 1, 'Show Axes': False, 'Show Trail': False, 'Value': True}
 LICENSE_FILES = ['LICENSE', 'LICENSE.txt', 'UNLICENSE', 'UNLICENSE.txt', 'LICENSE.md']
-
-
-@roscompile
-def check_dynamic_reconfigure(package):
-    cfgs = package.dynamic_reconfigs
-    if len(cfgs) == 0:
-        return
-    pkg_list = {'dynamic_reconfigure'}
-    package.manifest.add_packages(pkg_list, pkg_list)
-    package.cmake.section_check(cfgs, 'generate_dynamic_reconfigure_options', '')
-    package.cmake.section_check(pkg_list, 'find_package', 'COMPONENTS')
-
-    for fn in cfgs:
-        make_executable(os.path.join(package.root, fn))
-
-
-@roscompile
-def remove_useless_files(package):
-    mainpage_pattern = re.compile(MAINPAGE_S % package.name)
-    for fn in package.misc_files:
-        if 'mainpage.dox' in fn:
-            full_path = os.path.join(package.root, fn)
-            s = open(full_path).read()
-            if mainpage_pattern.match(s):
-                os.remove(full_path)
 
 
 @roscompile_repo
