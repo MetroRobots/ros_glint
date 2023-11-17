@@ -7,8 +7,6 @@ from ros_introspection.resource_list import get_available_licenses, get_license_
 
 import yaml
 
-CONFIG_PATH = os.path.expanduser('~/.ros/roscompile.yaml')
-CONFIG = None
 PKG_PATH = get_package_path('roscompile')
 TRAILING_PATTERN = re.compile(r'^(.*[^\w])\w+\n$')
 LICENSE_TRANSLATION = yaml.safe_load(open(get_package_file('roscompile', 'data/license_translation.yaml')))
@@ -20,16 +18,6 @@ REPO_FUNCTIONS = set()
 def roscompile_repo(f):
     REPO_FUNCTIONS.add(f.__name__)
     return f
-
-
-def get_config():
-    global CONFIG
-    if CONFIG is None:
-        if os.path.exists(CONFIG_PATH):
-            CONFIG = yaml.safe_load(open(CONFIG_PATH))
-        else:
-            CONFIG = {}
-    return CONFIG
 
 
 def get_license_key(license_name):
