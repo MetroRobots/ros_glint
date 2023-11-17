@@ -1,21 +1,13 @@
 import datetime
 import os
-import yaml
 
 from ros_introspection.package_structure import get_repo_root
-from ros_introspection.rviz_config import dictionary_subtract
-from ros_introspection.ros_util import get_package_file
 from ros_introspection.resource_list import get_license_info
 from ros_introspection.util import get_sibling_packages, get_packages
 
-from .util import roscompile, roscompile_repo
+from .util import roscompile_repo
 from .util import get_config, get_license_key
 
-
-RVIZ_CLASS_DEFAULTS = yaml.safe_load(open(get_package_file('roscompile', 'data/rviz_class_defaults.yaml')))
-RVIZ_GENERIC_DEFAULTS = yaml.safe_load(open(get_package_file('roscompile', 'data/rviz_generic_defaults.yaml')))
-RVIZ_GLOBAL_DEFAULTS = yaml.safe_load(open(get_package_file('roscompile', 'data/rviz_global_defaults.yaml')))
-ROBOT_MODEL_LINK_DEFAULTS = {'Alpha': 1, 'Show Axes': False, 'Show Trail': False, 'Value': True}
 LICENSE_FILES = ['LICENSE', 'LICENSE.txt', 'UNLICENSE', 'UNLICENSE.txt', 'LICENSE.md']
 
 
@@ -51,48 +43,6 @@ def update_metapackage(package, require_matching_name=False):
         export_tag = package.manifest.get_export_tag()
         meta_tag = package.manifest.tree.createElement('metapackage')
         package.manifest.insert_new_tag_inside_another(export_tag, meta_tag)
-
-
-@roscompile
-def clean_up_rviz_configs(package):
-    for rviz_config in package.rviz_configs:
-        # print("\tCleaning up " + str(rviz_config))
-        for config in rviz_config.get_class_dicts():
-            if dictionary_subtract(config, RVIZ_GENERIC_DEFAULTS):
-                rviz_config.changed = True
-
-            full_class = config['Class']
-            class_name = full_class.split('/')[-1]
-
-            the_defaults = RVIZ_CLASS_DEFAULTS.get(full_class, {})
-            the_defaults.update(RVIZ_CLASS_DEFAULTS.get(class_name, {}))
-            if dictionary_subtract(config, the_defaults):
-                rviz_config.changed = True
-
-            # Special Case(s)
-            if config.get('Topic') == '':
-                del config['Topic']
-                rviz_config.changed = True
-
-            if full_class == 'rviz_default_plugins/RobotModel':
-                for k, v in list(config.get('Links', {}).items()):
-                    if not isinstance(v, dict):
-                        continue
-                    if dictionary_subtract(config['Links'][k], ROBOT_MODEL_LINK_DEFAULTS):
-                        rviz_config.changed = True
-                        if not config['Links'][k]:
-                            del config['Links'][k]
-
-            if full_class in ['rviz/Camera', 'rviz_default_plugins/Camera'] and 'Visibility' in config:
-                visibility = config['Visibility']
-                for key in list(visibility.keys()):
-                    if visibility[key]:
-                        rviz_config.changed = True
-                        del visibility[key]
-                if not visibility:
-                    del config['Visibility']
-        if dictionary_subtract(rviz_config.contents, RVIZ_GLOBAL_DEFAULTS):
-            rviz_config.changed = True
 
 
 def get_license_path(folder):

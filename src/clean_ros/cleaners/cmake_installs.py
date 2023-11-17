@@ -229,7 +229,7 @@ def update_cplusplus_installs(package):
 def update_misc_installs(package):
     extra_files_by_folder = collections.defaultdict(list)
 
-    for rel_fn, package_file in package.components_by_name.items():
+    for rel_fn, package_file in sorted(package.components_by_name.items()):
         if package_file.__class__.needs_share_installation():
             extra_files_by_folder[rel_fn.parent].append(str(rel_fn.name))
 
