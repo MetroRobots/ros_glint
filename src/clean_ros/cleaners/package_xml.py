@@ -1,7 +1,8 @@
 from ..core import clean_ros
 from ..util import get_ignore_data
+from ..config import get_config
 from ros_introspect.package import DependencyType
-from ros_introspect.components.package_xml import count_trailing_spaces, get_chunks, get_sort_key
+from ros_introspect.components.package_xml import count_trailing_spaces, get_chunks, get_sort_key, PEOPLE_TAGS
 
 
 @clean_ros
@@ -218,3 +219,23 @@ def greedy_depend_tag(package):
     if package.package_xml.xml_format == 1:
         return
     replace_package_set(package.package_xml, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')
+
+
+@clean_ros
+def update_people(package, config=None):
+    if config is None:
+        config = get_config()
+    for d in config.get('replace_rules', []):
+        target_name = d['to']['name']
+        target_email = d['to']['email']
+        search_name = d['from'].get('name')
+        search_email = d['from'].get('email')
+
+        for el in package.package_xml.get_elements_by_tags(PEOPLE_TAGS):
+            name = el.childNodes[0].nodeValue
+            email = el.getAttribute('email') if el.hasAttribute('email') else ''
+            if (search_name is None or name == search_name) and (search_email is None or email == search_email):
+                el.childNodes[0].nodeValue = target_name
+                if target_email:
+                    el.setAttribute('email', target_email)
+                package.package_xml.changed = True

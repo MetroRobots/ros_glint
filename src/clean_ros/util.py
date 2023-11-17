@@ -1,6 +1,9 @@
 import os
+import re
 import stat
 from .core import root
+
+TRAILING_PATTERN = re.compile(r'^(.*[^\w])\w+\n$')
 
 
 def make_executable(fn):

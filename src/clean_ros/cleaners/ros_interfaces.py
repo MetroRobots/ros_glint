@@ -1,38 +1,38 @@
-from ros_introspection.ros_generator import PRIMITIVES
-
-from .util import TRAILING_PATTERN, roscompile
+from ..core import clean_ros
+from ..util import TRAILING_PATTERN
+from ros_introspect.components.ros_interface import PRIMITIVES
 
 STANDARD = {
     'Header': 'std_msgs'
 }
 
 
-@roscompile
+@clean_ros
 def fill_in_msg_package_names(package):
-    all_names = set()
-    gens = list(package.get_all_generators())
-    for gen in gens:
-        all_names.add(gen.base_name)
-    for gen in gens:
-        for section in gen.sections:
+    interfaces = package.get_ros_interfaces()
+    all_names = {ros_i.name for ros_i in interfaces}
+
+    for interface in interfaces:
+        for section in interface.sections:
             for field in section.fields:
                 if '/' in field.type or field.type in PRIMITIVES:
                     continue
 
                 if field.type in STANDARD:
                     field.type = STANDARD[field.type] + '/' + field.type
-                    gen.changed = True
+                    interface.changed = True
                 elif field.type in all_names:
                     field.type = package.name + '/' + field.type
-                    gen.changed = True
+                    interface.changed = True
 
 
-@roscompile
+@clean_ros
 def remove_trailing_whitespace_from_generators(package):
-    for gen in package.get_all_generators():
-        for i, content in enumerate(gen.contents):
+    for interface in package.get_ros_interfaces():
+        for i, content in enumerate(interface.contents):
             if not isinstance(content, str):
                 continue
             m = TRAILING_PATTERN.match(content)
             if m:
-                gen.contents[i] = m.group(1) + '\n'
+                interface.contents[i] = m.group(1) + '\n'
+                interface.changed = True

@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 
 from ros_introspection.ros_util import get_package_path, get_package_file
@@ -8,7 +7,6 @@ from ros_introspection.resource_list import get_available_licenses, get_license_
 import yaml
 
 PKG_PATH = get_package_path('roscompile')
-TRAILING_PATTERN = re.compile(r'^(.*[^\w])\w+\n$')
 LICENSE_TRANSLATION = yaml.safe_load(open(get_package_file('roscompile', 'data/license_translation.yaml')))
 
 REPO_FUNCTIONS = set()
