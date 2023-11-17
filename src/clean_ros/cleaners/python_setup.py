@@ -2,12 +2,21 @@ from stylish_cmake_parser import Command, SectionStyle
 from ros_introspect.package import MiscPackageFile
 from ros_introspect.components.setup_py import create_setup_py, contains_quoted_string, quote_string, unquote_string
 from ros_introspect.components.setup_cfg import SetupCFG
+from ros_introspect.components.source_code import SourceCode
 from ..core import clean_ros
 from ..cmake_ordering import insert_in_order
-from .cmake import install_cmake_dependencies
-from .cmake_installs import install_section_check
+from .cmake import install_cmake_dependencies, section_check
+from .cmake_installs import install_section_check, InstallType
+from ..util import make_executable
+import re
 
 CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
+MAIN_IMPORT_PATTERN = re.compile(r'from ([\w\.]+) import.*main.*')
+ENTRY_POINT_SCRIPT_TEMPLATE = """#!/usr/bin/env python3
+
+from {pkg}.{lib_name} import main
+main()
+"""
 
 
 @clean_ros
@@ -23,6 +32,62 @@ def check_python_marker(package):
         f.write('')
 
     package.add_file(MiscPackageFile(marker_path, package))
+
+
+@clean_ros
+def generate_ament_cmake_python_entry_points(package):
+    if package.build_type != 'ament_cmake':
+        return
+    entry_dict = get_entry_points(package)
+
+    if not entry_dict:
+        return
+    execs = package.get_source_by_tags('pyscript', 'python')
+    for exec in execs:
+        ret = exec.search_lines_for_pattern(MAIN_IMPORT_PATTERN)
+        if not ret:
+            continue
+        package_parts = ret[0][0].split('.')
+        if package_parts[0] == package.name and package_parts[-1] in entry_dict:
+            del entry_dict[package_parts[-1]]
+
+    scripts_dir = package.root / 'scripts'
+    scripts_dir.mkdir(exist_ok=True)
+
+    for name, source in entry_dict.items():
+        script_fn = scripts_dir / name
+        if not script_fn.exists():
+            with open(script_fn, 'w') as f:
+                f.write(ENTRY_POINT_SCRIPT_TEMPLATE.format(
+                    pkg=package.name,
+                    lib_name=name,
+                ))
+            make_executable(script_fn)
+            package.add_file(SourceCode(script_fn, package))
+
+
+@clean_ros
+def sync_package_xml_and_setup_py(package):
+    if package.setup_py is None and package.build_type != 'ament_python':
+        return
+
+    if package.setup_py is None:
+        create_setup_py(package)
+
+    for tag in ['version', 'description', 'license']:
+        tags = package.manifest.get_elements_by_tags([tag])
+        if not tags:
+            continue
+        value = tags[0].childNodes[0].nodeValue
+        package.setup_py.args[tag] = repr(value)
+
+    for maintainer in package.manifest.get_elements_by_tags(['maintainer']):
+        # TODO: Expand for author
+        # TODO: Joint multiple people?
+        package.setup_py.args['maintainer'] = repr(maintainer.childNodes[0].nodeValue)
+        package.setup_py.args['maintainer_email'] = repr(maintainer.getAttribute('email'))
+
+    package.setup_py.changed = True
 
 
 def has_python_library(package_name, py_src):
@@ -103,13 +168,13 @@ def update_python_installs(package):
     # Part 1: Library Setup for ament_cmake
     if package.build_type == 'ament_cmake' and package.get_source_by_tags('pylib'):
         acp = 'ament_cmake_python'
-        build_tools = package.manifest.get_packages_by_tag('buildtool_depend')
+        build_tools = package.package_xml.get_packages_by_tag('buildtool_depend')
         if acp not in build_tools:
-            package.manifest.insert_new_packages('buildtool_depend', [acp])
+            package.package_xml.insert_new_packages('buildtool_depend', [acp])
 
         install_cmake_dependencies(package, {acp})
 
-        package.cmake.section_check(['${PROJECT_NAME}'], 'ament_python_install_package')
+        section_check(package.cmake, ['${PROJECT_NAME}'], 'ament_python_install_package')
 
     # Part 2: Executables
     execs = package.get_source_by_tags('pyscript', 'python')
@@ -146,7 +211,7 @@ def update_python_installs(package):
                                   SectionStyle(CATKIN_INSTALL_PYTHON_PRENAME))
             insert_in_order(package.cmake, cmake_cmd)
         else:
-            package.cmake.section_check(exec_fns, cmd, 'PROGRAMS')
+            section_check(package.cmake, exec_fns, cmd, 'PROGRAMS')
 
     elif package.build_type == 'ament_python':
         if package.setup_py is None:
@@ -186,4 +251,4 @@ def update_python_installs(package):
                     console_scripts.append(quote_string(entry))
                     package.setup_py.changed = True
     elif package.build_type == 'ament_cmake':
-        install_section_check(package.cmake, exec_fns, 'python', catkin=package.build_type == 'catkin')
+        install_section_check(package.cmake, exec_fns, InstallType.PYTHON, package.ros_version)
