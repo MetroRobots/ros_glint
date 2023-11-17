@@ -46,7 +46,7 @@ for fn in TEST_CASE_FILENAMES:
 
 
 def run_case(test_config, cases):
-    resources = ROSResources()
+    resources = ROSResources.get()
 
     with cases[test_config['in']] as pkg_in:
         pkg_out = cases[test_config['out']]

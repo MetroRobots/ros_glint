@@ -353,7 +353,7 @@ def get_target_build_rules(cmake):
 
 
 def get_msg_dependencies_from_source(package, sources):
-    resources = ROSResources()
+    resources = ROSResources.get()
     deps = set()
     for rel_fn in sources:
         srcs = [sc for sc in package.source_code if str(sc.rel_fn) == rel_fn]
