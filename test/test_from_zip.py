@@ -3,6 +3,7 @@ import pathlib
 import pytest
 from clean_ros import get_functions
 from clean_ros.diff import files_match
+from clean_ros.terminal import Fore, Style
 from zip_testing import get_test_cases
 from betsy_ros import ROSInterface
 
@@ -78,6 +79,11 @@ def run_case(test_config, cases):
 
         def jp(paths):
             return ', '.join(map(str, paths))
+
+        print(Fore.BLUE + Style.BRIGHT, end='')
+        print('{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
+                                         ','.join(test_config['functions'])), end='')
+        print(Style.RESET_ALL)
 
         assert len(folder_diff['deleted']) == 0, \
             f'These files should have been deleted but weren\'t: {jp(folder_diff["deleted"])}'
