@@ -14,7 +14,6 @@ ROBOT_MODEL_LINK_DEFAULTS = {'Alpha': 1, 'Show Axes': False, 'Show Trail': False
 @clean_ros
 def clean_up_rviz_configs(package):
     for rviz_config in package.rviz_config:
-        # print("\tCleaning up " + str(rviz_config))
         for config in rviz_config.get_class_dicts():
             if dictionary_subtract(config, GENERIC_DEFAULTS):
                 rviz_config.changed = True

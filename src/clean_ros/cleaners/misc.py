@@ -1,5 +1,5 @@
 from ..core import clean_ros
-from ..util import make_executable
+from ..util import set_executable
 from .cmake import section_check
 from ros_introspect.package import DependencyType
 import re
@@ -22,7 +22,7 @@ def check_dynamic_reconfigure(package):
     section_check(cmake, pkg_list, 'find_package', 'COMPONENTS')
 
     for cfg in package.dynamic_reconfig:
-        make_executable(cfg.full_path)
+        set_executable(cfg.full_path, True)
 
 
 @clean_ros

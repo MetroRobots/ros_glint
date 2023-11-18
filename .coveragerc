@@ -1,0 +1,7 @@
+[report]
+omit =
+    *_version.py
+    *finder.py
+    *terminal.py
+    *diff.py
+    *config.py

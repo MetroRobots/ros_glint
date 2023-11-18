@@ -429,7 +429,6 @@ def check_exported_dependencies(package):
         if self_depend:
             tokens = [cmake.resolve_variables(s) for s in section.values]
             key = '${%s_EXPORTED_TARGETS}' % package.name
-            print(tokens, key)
             if key not in tokens:
                 section.add(key)
 

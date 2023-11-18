@@ -7,7 +7,7 @@ from ..core import clean_ros
 from ..cmake_ordering import insert_in_order
 from .cmake import install_cmake_dependencies, section_check
 from .cmake_installs import install_section_check, InstallType
-from ..util import make_executable
+from ..util import set_executable
 import re
 
 CATKIN_INSTALL_PYTHON_PRENAME = '\n                      '  # newline plus len('catkin_install_python(')
@@ -62,7 +62,7 @@ def generate_ament_cmake_python_entry_points(package):
                     pkg=package.name,
                     lib_name=name,
                 ))
-            make_executable(script_fn)
+            set_executable(script_fn, True)
             package.add_file(SourceCode(script_fn, package))
 
 

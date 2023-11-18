@@ -7,7 +7,7 @@ import yaml
 import zipfile
 
 from ros_introspect.finder import walk
-from clean_ros.util import make_executable
+from clean_ros.util import set_executable
 
 
 class ROSCompilePackageFiles:
@@ -67,7 +67,7 @@ class ROSCompilePackageFiles:
             with open(outfile, 'w') as f:
                 f.write(contents)
             if fn in self.executables:
-                make_executable(outfile)
+                set_executable(outfile, True)
 
     def clear(self):
         if self.root.exists():
