@@ -6,12 +6,16 @@ from ros_introspect.components.package_xml import count_trailing_spaces, get_chu
 
 
 @clean_ros
-def check_manifest_dependencies(package):
+def check_manifest_dependencies(package, config):
+    if config is None:
+        config = get_config()
+    prefer_depend_tag = config.get('prefer_depend_tag', False)
+
     dep_dict = {}
     for dt in DependencyType:
         dep_dict[dt] = package.get_dependencies(dt)
 
-    package.package_xml.add_dependencies(dep_dict)
+    package.package_xml.add_dependencies(dep_dict, prefer_depend_tag)
 
     # Special handling for interface dependencies
     # because not all run deps are build deps
