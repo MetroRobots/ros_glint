@@ -1,43 +1,32 @@
-from ros_introspection.cmake import Command, CommandGroup
-from clean_ros.cleaners.cmake import NEWLINE_PLUS_2, NEWLINE_PLUS_4, NEWLINE_PLUS_8
-from clean_ros.cleaners.python_setup import CATKIN_INSTALL_PYTHON_PRENAME
-
-from .util import roscompile
+from stylish_cmake_parser import Command, CommandGroup
+from ..core import clean_ros
+from .cmake import NEWLINE_PLUS_2, NEWLINE_PLUS_4, NEWLINE_PLUS_8
+from .python_setup import CATKIN_INSTALL_PYTHON_PRENAME
 
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 
 
-@roscompile
-def check_generators(package):
-    if package.ros_version == 1:
-        for cmd in package.cmake.content_map['catkin_package']:
-            section = cmd.get_section('CATKIN_DEPENDS')
-            if 'message_generation' in section.values:
-                section.values.remove('message_generation')
-                cmd.changed = True
-
-
-def alphabetize_sections_helper(cmake):
-    for content in cmake.contents:
-        if isinstance(content, Command):
-            for section in content.get_real_sections():
-                if section.name in SHOULD_ALPHABETIZE:
-                    sorted_values = sorted(section.values)
-                    if sorted_values != section.values:
-                        section.values = sorted_values
-                        content.changed = True
-        elif isinstance(content, CommandGroup):
-            alphabetize_sections_helper(content.sub)
-
-
-@roscompile
-def alphabetize_sections(package):
+@clean_ros
+def alphabetize_cmake_sections(package):
     if not package.cmake:
         return
+
+    def alphabetize_sections_helper(cmake):
+        for content in cmake.contents:
+            if isinstance(content, Command):
+                for section in content.get_real_sections():
+                    if section.name in SHOULD_ALPHABETIZE:
+                        sorted_values = sorted(section.values)
+                        if sorted_values != section.values:
+                            section.values = sorted_values
+                            content.changed = True
+            elif isinstance(content, CommandGroup):
+                alphabetize_sections_helper(content.sub)
+
     alphabetize_sections_helper(package.cmake)
 
 
-@roscompile
+@clean_ros
 def prettify_catkin_package_cmd(package):
     if not package.cmake:
         return
@@ -47,13 +36,14 @@ def prettify_catkin_package_cmd(package):
         cmd.changed = True
 
 
-@roscompile
+@clean_ros
 def prettify_package_lists(package):
     if not package.cmake:
         return
     acceptable_styles = [(NEWLINE_PLUS_8, NEWLINE_PLUS_8), (NEWLINE_PLUS_4, NEWLINE_PLUS_8)]
 
-    for cmd_name, section_name in [('find_package', 'COMPONENTS'), ('catkin_package', 'CATKIN_DEPENDS')]:
+    for cmd_name, section_name in [('find_package', 'COMPONENTS'),
+                                   ('catkin_package', 'CATKIN_DEPENDS')]:
         for cmd in package.cmake.content_map[cmd_name]:
             for section in cmd.get_real_sections():
                 if section.name != section_name:
@@ -67,7 +57,7 @@ def prettify_package_lists(package):
                         cmd.changed = True
 
 
-@roscompile
+@clean_ros
 def prettify_msgs_srvs(package):
     if not package.cmake:
         return
@@ -97,7 +87,7 @@ def prettify_msgs_srvs(package):
                     cmd.changed = True
 
 
-@roscompile
+@clean_ros
 def prettify_installs(package):
     if not package.cmake:
         return
