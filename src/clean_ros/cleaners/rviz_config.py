@@ -48,5 +48,19 @@ def clean_up_rviz_configs(package):
                         del visibility[key]
                 if not visibility:
                     del config['Visibility']
+
+            if full_class in ['rviz/TF', 'rviz_default_plugins/TF']:
+                if 'Tree' in config:
+                    del config['Tree']
+                    rviz_config.changed = True
+                if 'Frames' in config:
+                    frames = config['Frames']
+                    for key in list(frames.keys()):
+                        if frames[key]['Value']:
+                            del frames[key]
+                            rviz_config.changed = True
+                    if not frames:
+                        del config['Frames']
+
         if dictionary_subtract(rviz_config.contents, GLOBAL_DEFAULTS):
             rviz_config.changed = True

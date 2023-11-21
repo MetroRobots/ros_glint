@@ -49,7 +49,7 @@ def enforce_manifest_ordering(package, alphabetize=True):
 
     new_children = []
 
-    for a, b in sorted(chunks, key=lambda d: get_sort_key(d[0], alphabetize)):
+    for a, b in sorted(chunks, key=lambda d: get_sort_key(d[0], alphabetize, package.package_xml.xml_format)):
         new_children += b
 
     if root.childNodes != new_children:

@@ -1,5 +1,5 @@
 from ros_introspection.cmake import Command, CommandGroup
-from clean_ros.cleaners.cmake import NEWLINE_PLUS_4, NEWLINE_PLUS_8
+from clean_ros.cleaners.cmake import NEWLINE_PLUS_2, NEWLINE_PLUS_4, NEWLINE_PLUS_8
 from clean_ros.cleaners.python_setup import CATKIN_INSTALL_PYTHON_PRENAME
 
 from .util import roscompile
@@ -71,12 +71,30 @@ def prettify_package_lists(package):
 def prettify_msgs_srvs(package):
     if not package.cmake:
         return
+    # ROS 1 version
     for cmd in package.cmake.content_map['add_message_files'] + package.cmake.content_map['add_service_files']:
         for section in cmd.get_real_sections():
             if len(section.values) > 1:
                 section.style.name_val_sep = NEWLINE_PLUS_4
                 section.style.val_sep = NEWLINE_PLUS_4
             cmd.changed = True
+    # ROS 2 version
+    for cmd in package.cmake.content_map['rosidl_generate_interfaces']:
+        for section in cmd.get_real_sections():
+            if section.name == '' and section == cmd.sections[0]:
+                if section.style.val_sep != NEWLINE_PLUS_4:
+                    section.style.val_sep = NEWLINE_PLUS_4
+                    cmd.changed = True
+            elif section.name == 'DEPENDENCIES':
+                if section.style.prename != NEWLINE_PLUS_2:
+                    section.style.prename = NEWLINE_PLUS_2
+                    cmd.changed = True
+                if section.style.val_sep != NEWLINE_PLUS_4:
+                    section.style.val_sep = NEWLINE_PLUS_4
+                    cmd.changed = True
+                if section.style.name_val_sep != NEWLINE_PLUS_4:
+                    section.style.name_val_sep = NEWLINE_PLUS_4
+                    cmd.changed = True
 
 
 @roscompile

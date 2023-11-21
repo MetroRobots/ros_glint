@@ -4,7 +4,7 @@ import re
 from ros_introspect.components.plugin_xml import PluginXML
 
 from ..core import clean_ros
-from .cmake import install_cmake_dependencies, section_check, check_complex_section
+from .cmake import install_cmake_dependencies, section_check
 
 PLUGIN_PATTERN = r'PLUGINLIB_EXPORT_CLASS\(([^:]+)::([^,]+),\s*([^:]+)::([^,]+)\)'
 PLUGIN_RE = re.compile(PLUGIN_PATTERN)
@@ -120,13 +120,4 @@ def check_plugins(package):
                 xml.insert_new_class(library, pkg1, name1, pkg2, name2)
 
         if package.ros_version > 1:
-            exported_library = f'export_{library}'
-            section_check(package.cmake, [exported_library], 'ament_export_targets')
-            for cmd in package.cmake.content_map['install']:
-                targets = cmd.get_section('TARGETS')
-                if not targets or library not in targets.values:
-                    continue
-                check_complex_section(cmd, 'EXPORT', exported_library)
-                break
-
             install_cmake_dependencies(package, {'ament_cmake_ros'})

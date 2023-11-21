@@ -9,6 +9,7 @@ from ros_introspect.components.source_code import CPP_INCLUDE1, CPP_INCLUDE2
 from ros_introspect.ros_resources import ROSResources
 from stylish_cmake_parser import Command, CommandGroup, SectionStyle
 ALL_SPACES = re.compile(r' +')
+NEWLINE_PLUS_2 = '\n  '
 NEWLINE_PLUS_4 = '\n    '
 NEWLINE_PLUS_8 = '\n        '
 
@@ -393,7 +394,7 @@ def get_matching_add_depends(cmake, search_target):
 
 @clean_ros
 def check_exported_dependencies(package):
-    if not package.cmake:
+    if not package.cmake or package.ros_version == 2:
         return
     cmake = package.cmake
     targets = get_target_build_rules(cmake)

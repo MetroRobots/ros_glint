@@ -21,7 +21,9 @@ main()
 
 @clean_ros
 def check_python_marker(package):
-    if package.build_type != 'ament_python':
+    buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
+
+    if package.build_type != 'ament_python' and 'ament_cmake_python' not in buildtools:
         return
     resource_folder = package.root / 'resource'
     marker_path = resource_folder / package.name
@@ -100,8 +102,6 @@ def has_python_library(package_name, py_src):
 
 @clean_ros
 def check_setup_py(package):
-    if package.build_type == 'ament_cmake':
-        return
     py_src = package.get_source_by_tags(set(), 'python')
     if not py_src and package.build_type not in ['ament_python', 'catkin']:
         return
@@ -114,7 +114,7 @@ def check_setup_py(package):
     if package.build_type == 'catkin':
         if 'catkin_python_setup' not in package.cmake.content_map:
             insert_in_order(package.cmake, Command('catkin_python_setup', package.cmake))
-    elif package.build_type == 'ament_python':
+    else:
         package.setup_py.include_data_files(['package.xml'])
 
         # Determine packages/package_dir

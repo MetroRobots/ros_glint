@@ -10,9 +10,9 @@ TEST_COMMANDS = [('group', variable) for variable in ROS_TESTING_FLAGS] + \
                  'roslint_cpp', 'roslint_python', 'roslint_add_test',
                  'catkin_add_nosetests', 'catkin_add_gtest', 'ament_add_gtest', 'add_rostest_gtest',
                  'ament_lint_auto_find_test_dependencies']
-INSTALL_COMMANDS = ['install', 'catkin_install_python', 'ament_python_install_module', 'ament_python_install_package',
-                    'ament_export_include_directories', 'ament_export_libraries',
-                    'ament_export_dependencies', 'ament_export_targets', 'pluginlib_export_plugin_description_file']
+INSTALL_COMMANDS = ['ament_export_targets', 'install', 'catkin_install_python', 'ament_python_install_module',
+                    'ament_python_install_package', 'ament_export_include_directories', 'ament_export_libraries',
+                    'ament_export_dependencies', 'pluginlib_export_plugin_description_file']
 
 BASE_ORDERING = ['cmake_minimum_required', 'project',
                  ('group', 'CMAKE_C_STANDARD'), ('group', 'CMAKE_CXX_STANDARD'), ('group', 'CMAKE_COMPILER_IS_GNUCXX'),

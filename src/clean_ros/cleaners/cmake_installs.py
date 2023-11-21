@@ -9,7 +9,7 @@ from ros_introspect.components.setup_py import create_setup_py
 
 from ..core import clean_ros
 from ..cmake_ordering import insert_in_order
-from .cmake import check_complex_section, get_multiword_section
+from .cmake import check_complex_section, section_check, get_multiword_section
 
 
 class InstallType(IntEnum):
@@ -74,7 +74,17 @@ def get_install_types(cmd, subfolder=''):
     check_subfolder = not directory_matches(cmd, subfolder)
     token = cmd.get_tokens(True)[0]
 
-    for section in cmd.get_sections('DESTINATION'):
+    destination_sections = []
+    for section in cmd.get_real_sections():
+        if section.name == 'DESTINATION':
+            destination_sections.append(section)
+        elif isinstance(section.name, str) and section.name.endswith('DESTINATION'):
+            destination_sections.append(section)
+        elif not isinstance(section.name, str):
+            print(section.name, '?')
+            exit(0)
+
+    for section in destination_sections:
         the_folder = section.values[0]
         if the_folder.endswith('/'):
             the_folder = the_folder[:-1]
@@ -129,10 +139,10 @@ def remove_install_section(cmd, destination_map):
         cmd.mark_changed()
 
 
-def get_commands_by_type(cmake, name, subfolder=''):
+def get_commands_by_type(cmake, install_type, subfolder=''):
     matches = []
     for cmd in cmake.content_map['install']:
-        if name in get_install_types(cmd, subfolder):
+        if install_type in get_install_types(cmd, subfolder):
             matches.append(cmd)
     return matches
 
@@ -226,6 +236,65 @@ def update_cplusplus_installs(package):
 
 
 @clean_ros
+def export_cplusplus_libraries(package):
+    if package.ros_version == 1:
+        return
+    libraries = package.cmake.get_libraries()
+    if not libraries:
+        return
+
+    export_targets = []
+    cmds = get_commands_by_type(package.cmake, InstallType.LIBRARY)
+
+    for library in libraries:
+        exporting_cmd = None
+        lib_cmds = []
+
+        my_export_name = None
+        for cmd in cmds:
+            targets = cmd.get_section('TARGETS')
+            if not targets or library not in targets.values:
+                continue
+            lib_cmds.append(cmd)
+            section = cmd.get_section('EXPORT')
+            if section:
+                my_export_name = section.values[0]
+                exporting_cmd = cmd
+
+        if package.cmake.content_map['ament_export_targets']:
+            my_export_name = package.cmake.content_map['ament_export_targets'][0].first_token()
+
+        if my_export_name is None:
+            my_export_name = 'export_' + library
+
+        export_targets.append(my_export_name)
+
+        if not exporting_cmd:
+            if lib_cmds:
+                exporting_cmd = lib_cmds[0]
+            else:
+                exporting_cmd = Command('install', parent=package.cmake)
+                exporting_cmd.add_section('TARGETS', [library])
+                insert_in_order(package.cmake, exporting_cmd)
+
+        check_complex_section(exporting_cmd, 'EXPORT', my_export_name)
+
+        # Sort the sections to put EXPORT right after TARGETS
+        sections_by_name = {s.name: s for s in exporting_cmd.get_real_sections()}
+        assert exporting_cmd.sections.index(sections_by_name['TARGETS']) == 0
+        ex_index = exporting_cmd.sections.index(sections_by_name['EXPORT'])
+
+        # Reorder sections
+        initial = exporting_cmd.sections[:1]
+        export = exporting_cmd.sections[ex_index:ex_index + 1]
+        intermediate = exporting_cmd.sections[1:ex_index]
+        tail = exporting_cmd.sections[ex_index+1:]
+        exporting_cmd.sections = initial + export + intermediate + tail
+
+    section_check(package.cmake, export_targets, 'ament_export_targets')
+
+
+@clean_ros
 def update_misc_installs(package):
     extra_files_by_folder = collections.defaultdict(list)
 
@@ -241,7 +310,9 @@ def update_misc_installs(package):
 
             install_section_check(
                 package.cmake, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
-    else:
+
+    buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
+    if package.build_type == 'ament_python' or 'ament_cmake_python' in buildtools:
         if package.setup_py is None:
             create_setup_py(package)
 
