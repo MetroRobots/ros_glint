@@ -94,6 +94,8 @@ def check_plugins(package):
         if not plugin_info:
             continue
         library = lookup_library(str(source_file.rel_fn))
+        if library is None:
+            continue
         for pkg1, name1, pkg2, name2 in plugin_info:
             # Create file if needed
             if pkg2 not in existing_plugins:

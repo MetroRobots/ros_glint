@@ -149,6 +149,8 @@ def targeted_section_check(cmake, cmd_name, section_name, items, style=None):
             insert_in_order(cmake, cmd)
         else:
             section = cmd.get_section(section_name)
+            if not section:
+                continue
             if style:
                 section.style = style
             ensure_section_values(cmake, section, items, alpha_order=False)
