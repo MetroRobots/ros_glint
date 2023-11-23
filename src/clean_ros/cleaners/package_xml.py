@@ -243,3 +243,13 @@ def update_people(package, config=None):
                 if target_email:
                     el.setAttribute('email', target_email)
                 package.package_xml.changed = True
+
+
+@clean_ros
+def update_license(package, config=None):
+    if config is None:
+        config = get_config()
+    if 'default_license' not in config or 'TODO' not in package.package_xml.get_license():
+        return
+
+    package.package_xml.set_license(config['default_license'])
