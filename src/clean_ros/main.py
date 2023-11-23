@@ -86,20 +86,33 @@ def preview_changes(package, fn_name, fne, use_package_name=False):
 
 
 def main():
+    functions = get_functions()
+
+    class ValidateCleaner(argparse.Action):
+        def __call__(self, parser, args, values, option_string=None):
+            for value in values:
+                if value not in functions:
+                    raise ValueError(f'{value} not a valid cleaner!')
+            args.cleaners = values
+
     parser = argparse.ArgumentParser()
+    parser.add_argument('cleaners', nargs='*', action=ValidateCleaner, metavar='cleaner', default=[])
     parser.add_argument('-y', '--yes-to-all', action='store_true')
     parser.add_argument('-f', '--folder', type=pathlib.Path, default='.')
     parser.add_argument('-r', '--raise-errors', action='store_true', help='Devel only')
+    parser.add_argument('cleaners', nargs='*', choices=functions.keys(), metavar='cleaner')
+
     args = parser.parse_args()
 
     pkgs = list(find_packages(args.folder))
-    functions = get_functions()
 
     resources = ROSResources.get()
     resources.load_from_ros()
 
     for package in pkgs:
         for name, fne in functions.items():
+            if args.cleaners and name not in args.cleaners:
+                continue
             try:
                 if args.yes_to_all:
                     fne(package)
