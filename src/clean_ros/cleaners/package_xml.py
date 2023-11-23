@@ -6,7 +6,7 @@ from ros_introspect.components.package_xml import count_trailing_spaces, get_chu
 
 
 @clean_ros
-def check_manifest_dependencies(package, config):
+def check_manifest_dependencies(package, config=None):
     if config is None:
         config = get_config()
     prefer_depend_tag = config.get('prefer_depend_tag', False)

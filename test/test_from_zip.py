@@ -2,7 +2,7 @@ import inspect
 import pathlib
 import pytest
 from clean_ros import get_functions
-from clean_ros.diff import files_match
+from clean_ros.diff import get_diff_string
 from clean_ros.terminal import Fore, Style
 from zip_testing import get_test_cases
 from betsy_ros import ROSInterface
@@ -43,6 +43,16 @@ for fn in TEST_CASE_FILENAMES:
         ros2_config = configs_to_test
         ros2_cases = test_data
         ros2_ids = test_ids
+
+
+def files_match(pkg_in, pkg_out, filename, show_diff=True):
+    """Return true if the contents of the given file are the same in each package. Otherwise maybe show the diff."""
+    generated_contents = pkg_in.get_contents(filename).rstrip()
+    canonical_contents = pkg_out.get_contents(filename).rstrip()
+    ret = generated_contents == canonical_contents
+    if show_diff and not ret:
+        print(get_diff_string(generated_contents, canonical_contents, filename))
+    return ret
 
 
 def run_case(test_config, cases):

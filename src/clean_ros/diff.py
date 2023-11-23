@@ -2,14 +2,27 @@ import difflib
 from .terminal import color_diff
 
 
-def files_match(pkg_in, pkg_out, filename, show_diff=True):
-    """Return true if the contents of the given file are the same in each package. Otherwise maybe show the diff."""
-    generated_contents = pkg_in.get_contents(filename).rstrip()
-    canonical_contents = pkg_out.get_contents(filename).rstrip()
-    ret = generated_contents == canonical_contents
-    if show_diff and not ret:
-        d = difflib.Differ()
-        print('=' * 5 + str(filename) + '=' * 45)
-        result = d.compare(generated_contents.split('\n'), canonical_contents.split('\n'))
-        print('\n'.join(color_diff(result)))
-    return ret
+def get_diff_string(contents0, contents1, filename):
+    s = '=' * 5 + str(filename) + '=' * 45 + '\n'
+    d = difflib.Differ()
+    result = d.compare(contents0.split('\n'), contents1.split('\n'))
+    s += '\n'.join(color_diff(result))
+    return s
+
+
+def check_diff(root0, root1, filename):
+    path0 = root0 / filename
+    path1 = root1 / filename
+    if path0.exists():
+        contents0 = open(path0).read()
+    else:
+        contents0 = ''
+
+    if path1.exists():
+        contents1 = open(path1).read()
+    else:
+        contents1 = ''
+
+    if contents0 == contents1:
+        return
+    return get_diff_string(contents0, contents1, filename)
