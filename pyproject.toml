@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clean_ros"
+description = "Pure Python library for cleaning ROS packages"
+authors = [
+  { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
+]
+maintainers = [
+  { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
+]
+
+requires-python = ">=3.8"
+
+dynamic = ["version"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Topic :: Software Development",
+]
+
+[project.scripts]
+clean_ros = "clean_ros.main:main"
+
+[project.urls]
+Homepage = "https://github.com/MetroRobots/clean_ros"
+"Bug Tracker" = "https://github.com/MetroRobots/clean_ros/issues"
+
+[tool.hatch]
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/clean_ros/_version.py"
