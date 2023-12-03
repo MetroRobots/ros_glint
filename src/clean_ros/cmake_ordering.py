@@ -134,8 +134,6 @@ def get_sort_key(content, anchors, ordering):
         index = get_ordering_index(content.command_name, ordering)
         if content.command_name in BUILD_TARGET_COMMANDS:
             token = content.first_token()
-            if token not in anchors:
-                anchors.append(token)
             key = anchors.index(token), BUILD_TARGET_COMMANDS.index(content.command_name)
         elif content.command_name == 'include_directories' and 'include_directories' in anchors:
             key = -1, anchors.index('include_directories')
