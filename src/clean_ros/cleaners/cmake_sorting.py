@@ -43,6 +43,7 @@ def enforce_ordering(cmake, default_style=None):
 
     for group in cmake.content_map['group']:
         enforce_ordering(group.contents, default_style)
+    cmake.mark_changed()
 
 
 @clean_ros

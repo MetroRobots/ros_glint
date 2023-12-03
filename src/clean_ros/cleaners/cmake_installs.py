@@ -338,4 +338,4 @@ def fix_double_directory_installs(package):
             if not final_slash and destination.endswith(directory):
                 # Remove double directory and final slash
                 section.values[0] = destination[:-len(directory) - 1]
-                cmd.changed = True
+                cmd.mark_changed()

@@ -64,6 +64,7 @@ def remove_empty_cmake_lines(package):
     for i, content in enumerate(cmake.contents[:-2]):
         if str(content)[-1] == '\n' and cmake.contents[i + 1] == '\n' and cmake.contents[i + 2] == '\n':
             cmake.contents[i + 1] = ''
+            cmake.mark_changed()
     cmake.contents = remove_empty_strings(cmake.contents)
 
 
