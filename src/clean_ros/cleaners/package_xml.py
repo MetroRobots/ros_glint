@@ -94,15 +94,14 @@ def enforce_manifest_tabbing(package):
                 prev_was_node = False
                 if c == node.childNodes[-1]:
                     continue
-                spaces = count_trailing_spaces(c.data)
-                if spaces > ideal_length:
-                    c.data = c.data[: ideal_length - spaces]
-                    changed = True
-                elif spaces < ideal_length:
-                    c.data = c.data + ' ' * (ideal_length - spaces)
-                    changed = True
+
                 if '\n' not in c.data:
                     c.data = '\n' + c.data
+                    changed = True
+                spaces = count_trailing_spaces(c.data)
+                if spaces != ideal_length:
+                    last_nl = c.data.rindex('\n')
+                    c.data = c.data[: last_nl + 1] + (' ' * ideal_length)
                     changed = True
             else:
                 if prev_was_node:
@@ -113,7 +112,7 @@ def enforce_manifest_tabbing(package):
                 enforce_tabbing_helper(manifest, c, tabs + 1)
 
         for c in insert_before_list:
-            node.insertBefore(manifest.get_tab_element(tabs), c)
+            node.insertBefore(manifest.create_new_tab_element(tabs), c)
 
         manifest.changed = manifest.changed or changed
 
@@ -121,7 +120,7 @@ def enforce_manifest_tabbing(package):
             return
         last = node.childNodes[-1]
         if last.nodeType != last.TEXT_NODE:
-            node.appendChild(manifest.get_tab_element(tabs - 1))
+            node.appendChild(manifest.create_new_tab_element(tabs - 1))
             manifest.changed = True
 
     enforce_tabbing_helper(package.package_xml, package.package_xml.root)

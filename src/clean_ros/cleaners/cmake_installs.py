@@ -64,6 +64,19 @@ def directory_matches(cmd, subfolder=''):
     return the_dir and subfolder and subfolder in the_dir.values
 
 
+def get_destinations(cmd):
+    for section in cmd.get_real_sections():
+        if isinstance(section.name, str) and section.name.endswith('DESTINATION'):
+            destination = section.values[0]
+            if '}' in destination:
+                ci = destination.rindex('}') + 1
+                root = destination[:ci]
+                subfolder = destination[ci:]
+                yield root, subfolder
+            else:
+                yield destination, ''
+
+
 def get_install_types(cmd, subfolder=''):
     """For a given CMake command, determine the install type(s) that this command uses.
 
@@ -71,28 +84,15 @@ def get_install_types(cmd, subfolder=''):
     installs into the catkin_destination with the given subfolder
     """
     types = set()
-    check_subfolder = not directory_matches(cmd, subfolder)
+    check_subfolder = subfolder is not None and not directory_matches(cmd, subfolder)
     token = cmd.get_tokens(True)[0]
 
-    destination_sections = []
-    for section in cmd.get_real_sections():
-        if section.name == 'DESTINATION':
-            destination_sections.append(section)
-        elif isinstance(section.name, str) and section.name.endswith('DESTINATION'):
-            destination_sections.append(section)
-        elif not isinstance(section.name, str):
-            print(section.name, '?')
-            exit(0)
-
-    for section in destination_sections:
-        the_folder = section.values[0]
-        if the_folder.endswith('/'):
-            the_folder = the_folder[:-1]
-        if len(subfolder) > 0 and check_subfolder:
-            if subfolder not in the_folder:
+    for root_destination, cmd_subfolder in get_destinations(cmd):
+        if check_subfolder:
+            cmd_subfolder = cmd_subfolder.lstrip('/')
+            if subfolder != cmd_subfolder:
                 continue
-            the_folder = the_folder.replace('/' + subfolder, '')
-        type_ = get_install_type(the_folder, token)
+        type_ = get_install_type(root_destination, token)
         if type_:
             types.add(type_)
     return types
@@ -112,6 +112,7 @@ def install_sections(cmd, destination_map, subfolder=''):
                 section = cmd.get_section(section_name)
                 if section and destination in section.values:
                     section.values.remove(destination)
+                    section.mark_changed()
                 destination += '/'
             check_complex_section(cmd, section_name, destination)
 
@@ -166,7 +167,7 @@ def install_section_check(cmake, items, install_type, ros_version, directory=Fal
     cmds = get_commands_by_type(cmake, install_type, subfolder)
     if len(items) == 0:
         for cmd in cmds:
-            if len(get_install_types(cmd)) == 1:
+            if len(get_install_types(cmd, subfolder)) == 1:
                 cmake.remove_command(cmd)
             else:
                 remove_install_section(cmd, install_config.destination_map)
@@ -192,7 +193,9 @@ def install_section_check(cmake, items, install_type, ros_version, directory=Fal
             items = nonmatching_items
         else:
             # We match the section
-            section.values = [value for value in section.values if value in items]
+            if set(section.values) != set(items):
+                section.values = [value for value in section.values if value in items]
+                section.mark_changed()
             items = [item for item in items if item not in section.values]
 
     if len(items) == 0:
@@ -303,6 +306,11 @@ def update_misc_installs(package):
             extra_files_by_folder[rel_fn.parent].append(str(rel_fn.name))
 
     if package.cmake:
+        existing_install_folders = set()
+        for cmd in get_commands_by_type(package.cmake, InstallType.SHARE, None):
+            for destination, subfolder in get_destinations(cmd):
+                existing_install_folders.add(subfolder.lstrip('/'))
+
         for folder, files in sorted(extra_files_by_folder.items()):
             subfolder = str(folder)
             if subfolder == '.':
@@ -311,6 +319,11 @@ def update_misc_installs(package):
             install_section_check(
                 package.cmake, files, InstallType.SHARE, package.ros_version, subfolder=subfolder)
 
+            if subfolder in existing_install_folders:
+                existing_install_folders.remove(subfolder)
+
+        for subfolder in existing_install_folders:
+            install_section_check(package.cmake, [], InstallType.SHARE, package.ros_version, subfolder=subfolder)
     buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
     if package.build_type == 'ament_python' or 'ament_cmake_python' in buildtools:
         if package.setup_py is None:
