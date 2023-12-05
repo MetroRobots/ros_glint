@@ -19,9 +19,9 @@ def alphabetize_cmake_sections(package):
                         sorted_values = sorted(section.values)
                         if sorted_values != section.values:
                             section.values = sorted_values
-                            content.changed = True
+                            content.mark_changed()
             elif isinstance(content, CommandGroup):
-                alphabetize_sections_helper(content.sub)
+                alphabetize_sections_helper(content.contents)
 
     alphabetize_sections_helper(package.cmake)
 
@@ -33,7 +33,7 @@ def prettify_catkin_package_cmd(package):
     for cmd in package.cmake.content_map['catkin_package']:
         for section in cmd.get_real_sections():
             section.style.prename = NEWLINE_PLUS_4
-        cmd.changed = True
+        cmd.mark_changed()
 
 
 @clean_ros
@@ -54,7 +54,7 @@ def prettify_package_lists(package):
                     if key not in acceptable_styles:
                         section.style.name_val_sep = NEWLINE_PLUS_8
                         section.style.val_sep = NEWLINE_PLUS_8
-                        cmd.changed = True
+                        cmd.mark_changed()
 
 
 @clean_ros
@@ -67,24 +67,24 @@ def prettify_msgs_srvs(package):
             if len(section.values) > 1:
                 section.style.name_val_sep = NEWLINE_PLUS_4
                 section.style.val_sep = NEWLINE_PLUS_4
-            cmd.changed = True
+            cmd.mark_changed()
     # ROS 2 version
     for cmd in package.cmake.content_map['rosidl_generate_interfaces']:
         for section in cmd.get_real_sections():
             if section.name == '' and section == cmd.sections[0]:
                 if section.style.val_sep != NEWLINE_PLUS_4:
                     section.style.val_sep = NEWLINE_PLUS_4
-                    cmd.changed = True
+                    cmd.mark_changed()
             elif section.name == 'DEPENDENCIES':
                 if section.style.prename != NEWLINE_PLUS_2:
                     section.style.prename = NEWLINE_PLUS_2
-                    cmd.changed = True
+                    cmd.mark_changed()
                 if section.style.val_sep != NEWLINE_PLUS_4:
                     section.style.val_sep = NEWLINE_PLUS_4
-                    cmd.changed = True
+                    cmd.mark_changed()
                 if section.style.name_val_sep != NEWLINE_PLUS_4:
                     section.style.name_val_sep = NEWLINE_PLUS_4
-                    cmd.changed = True
+                    cmd.mark_changed()
 
 
 @clean_ros
@@ -95,7 +95,7 @@ def prettify_installs(package):
         cmd.sections = [s for s in cmd.sections if not isinstance(s, str)]
         if not cmd.sections:
             continue
-        cmd.changed = True
+        cmd.mark_changed()
         if '\n' in cmd.sections[0].style.prename:
             new_style = cmd.sections[0].style.prename
         else:
@@ -115,4 +115,28 @@ def prettify_installs(package):
         section = cmd.sections[1]
         if section.style.prename != CATKIN_INSTALL_PYTHON_PRENAME:
             section.style.prename = CATKIN_INSTALL_PYTHON_PRENAME
-            cmd.changed = True
+            cmd.mark_changed()
+
+
+@clean_ros
+def prettify_command_groups(package):
+    if not package.cmake:
+        return
+
+    def pretty_groups_helper(cmake, indent=0):
+        for group in cmake.content_map['group']:
+            pretty_groups_helper(group.contents, indent + 2)
+
+        if indent == 0:
+            return
+        for i, content in enumerate(cmake.contents):
+            if isinstance(content, Command) and i > 0 and isinstance(cmake.contents[i-1], str):
+                prev = cmake.contents[i-1]
+                while '\n ' in prev:
+                    prev = prev.replace('\n ', '\n')
+                revised = prev.replace('\n', '\n' + (' ' * indent))
+                if prev != revised:
+                    cmake.contents[i - 1] = revised
+                    cmake.mark_changed()
+
+    pretty_groups_helper(package.cmake)

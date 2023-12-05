@@ -8,7 +8,7 @@ from ros_introspect.components.package_xml import count_trailing_spaces, get_chu
 @clean_ros
 def check_manifest_dependencies(package, config=None):
     if config is None:
-        config = get_config()
+        config = get_config()  # pragma: no cover
     prefer_depend_tag = config.get('prefer_depend_tag', False)
 
     dep_dict = {}
@@ -228,7 +228,7 @@ def greedy_depend_tag(package):
 @clean_ros
 def update_people(package, config=None):
     if config is None:
-        config = get_config()
+        config = get_config()  # pragma: no cover
     for d in config.get('replace_rules', []):
         target_name = d['to']['name']
         target_email = d['to']['email']
@@ -248,7 +248,7 @@ def update_people(package, config=None):
 @clean_ros
 def update_license(package, config=None):
     if config is None:
-        config = get_config()
+        config = get_config()  # pragma: no cover
     if 'default_license' not in config or 'TODO' not in package.package_xml.get_license():
         return
 
