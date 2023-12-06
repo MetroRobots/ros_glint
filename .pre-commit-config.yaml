@@ -22,7 +22,7 @@ repos:
     args:
     - --write-changes
     - --skip=data/*ignore
-  rev: v2.2.5
+  rev: v2.2.6
 - repo: https://github.com/adrienverge/yamllint
   hooks:
   - id: yamllint
