@@ -1,4 +1,4 @@
-from ..core import clean_ros
+from ..core import glinter
 from ..util import set_executable
 from .cmake import section_check
 from ros_introspect.package import DependencyType
@@ -8,7 +8,7 @@ MAINPAGE_S = r'/\*\*\s+\\mainpage\s+\\htmlinclude manifest.html\s+\\b %s\s+<!--\
              r'Provide an overview of your package.\s+-->\s+-->\s+[^\*]*\*/'
 
 
-@clean_ros
+@glinter
 def check_dynamic_reconfigure(package):
     if not package.dynamic_reconfig:
         return
@@ -25,7 +25,7 @@ def check_dynamic_reconfigure(package):
         set_executable(cfg.full_path, True)
 
 
-@clean_ros
+@glinter
 def remove_useless_files(package):
     mainpage_pattern = re.compile(MAINPAGE_S % package.name)
     for doc in package.documentation[:]:
@@ -38,7 +38,7 @@ def remove_useless_files(package):
             package.documentation.remove(doc)
 
 
-@clean_ros
+@glinter
 def misc_xml_formatting(package):
     package.package_xml.changed = True
     for config in package.plugin_xml:

@@ -3,8 +3,8 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "clean_ros"
-description = "Pure Python library for cleaning ROS packages"
+name = "ros_glint"
+description = "Pure Python library for linting ROS packages"
 readme = "README.md"
 authors = [
   { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
@@ -26,12 +26,12 @@ classifiers = [
 ]
 
 [project.scripts]
-clean_ros = "clean_ros.main:main"
+glint_ros = "ros_glint.main:main"
 
 [project.urls]
-Homepage = "https://github.com/MetroRobots/clean_ros"
-"Bug Tracker" = "https://github.com/MetroRobots/clean_ros/issues"
+Homepage = "https://github.com/MetroRobots/ros_glint"
+"Bug Tracker" = "https://github.com/MetroRobots/ros_glint/issues"
 
 [tool.hatch]
 version.source = "vcs"
-build.hooks.vcs.version-file = "src/clean_ros/_version.py"
+build.hooks.vcs.version-file = "src/ros_glint/_version.py"

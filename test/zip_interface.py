@@ -7,7 +7,7 @@ import yaml
 import zipfile
 
 from ros_introspect.finder import walk
-from clean_ros.util import set_executable
+from ros_glint.util import set_executable
 
 
 class ROSCompilePackageFiles:

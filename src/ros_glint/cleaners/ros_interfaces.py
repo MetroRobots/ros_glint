@@ -1,4 +1,4 @@
-from ..core import clean_ros
+from ..core import glinter
 from ros_introspect.components.ros_interface import PRIMITIVES
 
 STANDARD = {
@@ -6,14 +6,14 @@ STANDARD = {
 }
 
 
-@clean_ros
+@glinter
 def clean_whitespace_from_interface_definition(package):
     # Formerly remove_trailing_whitespace_from_generators
     for interface in package.get_ros_interfaces():
         interface.changed = True
 
 
-@clean_ros
+@glinter
 def fill_in_msg_package_names(package):
     interfaces = package.get_ros_interfaces()
     all_names = {ros_i.name for ros_i in interfaces}

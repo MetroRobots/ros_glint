@@ -1,11 +1,11 @@
-from ..core import clean_ros
+from ..core import glinter
 from ..util import get_ignore_data
 from ..config import get_config
 from ros_introspect.package import DependencyType
 from ros_introspect.components.package_xml import count_trailing_spaces, get_chunks, get_sort_key, PEOPLE_TAGS
 
 
-@clean_ros
+@glinter
 def check_manifest_dependencies(package, config=None):
     if config is None:
         config = get_config()  # pragma: no cover
@@ -46,7 +46,7 @@ def check_manifest_dependencies(package, config=None):
             package.package_xml.insert_new_packages(tag, [msg_pkg])
 
 
-@clean_ros
+@glinter
 def enforce_manifest_ordering(package, alphabetize=True):
     root = package.package_xml.root
     chunks = get_chunks(root.childNodes)
@@ -61,7 +61,7 @@ def enforce_manifest_ordering(package, alphabetize=True):
         root.childNodes = new_children
 
 
-@clean_ros
+@glinter
 def remove_empty_export_tag(package):
 
     def has_element_child(node):
@@ -80,7 +80,7 @@ def remove_empty_export_tag(package):
             return True
 
 
-@clean_ros
+@glinter
 def enforce_manifest_tabbing(package):
     def enforce_tabbing_helper(manifest, node, tabs=1):
         ideal_length = manifest.std_tab * tabs
@@ -126,7 +126,7 @@ def enforce_manifest_tabbing(package):
     enforce_tabbing_helper(package.package_xml, package.package_xml.root)
 
 
-@clean_ros
+@glinter
 def remove_empty_manifest_lines(package):
     def remove_empty_lines_helper(node):
         changed = False
@@ -194,7 +194,7 @@ def replace_text_node_contents(node, ignorables):
     return changed
 
 
-@clean_ros
+@glinter
 def remove_boilerplate_manifest_comments(package):
     ignorables = get_ignore_data('package', {'package': package.name}, add_newline=False)
     changed = replace_text_node_contents(package.package_xml.root, ignorables)
@@ -217,14 +217,14 @@ def replace_package_set(package_xml, source_tags, new_tag):
     package_xml.insert_new_packages(new_tag, intersection)
 
 
-@clean_ros
+@glinter
 def greedy_depend_tag(package):
     if package.package_xml.xml_format == 1:
         return
     replace_package_set(package.package_xml, ['build_depend', 'build_export_depend', 'exec_depend'], 'depend')
 
 
-@clean_ros
+@glinter
 def update_people(package, config=None):
     if config is None:
         config = get_config()  # pragma: no cover
@@ -244,7 +244,7 @@ def update_people(package, config=None):
                 package.package_xml.changed = True
 
 
-@clean_ros
+@glinter
 def update_license(package, config=None):
     if config is None:
         config = get_config()  # pragma: no cover

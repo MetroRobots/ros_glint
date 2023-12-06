@@ -4,7 +4,7 @@ import os
 import filecmp
 
 from ros_introspection.package_structure import get_repo_root
-from clean_ros.terminal import color_diff
+from ros_glint.terminal import color_diff
 from .util import REPO_FUNCTIONS
 
 

@@ -30,7 +30,7 @@ jobs:
       run: python -m pip install -e .[test]
 
     - name: Test package
-      run: python -m pytest --cov=ros_introspect --cov clean_ros
+      run: python -m pytest --cov=ros_introspect --cov ros_glint
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v3.1.4

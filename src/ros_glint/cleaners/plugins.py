@@ -3,7 +3,7 @@ import re
 
 from ros_introspect.components.plugin_xml import PluginXML
 
-from ..core import clean_ros
+from ..core import glinter
 from .cmake import install_cmake_dependencies, section_check
 
 PLUGIN_PATTERN = r'PLUGINLIB_EXPORT_CLASS\(([^:]+)::([^,]+),\s*([^:]+)::([^,]+)\)'
@@ -55,7 +55,7 @@ def add_to_package_xml(package_xml, plugin_xml, package_name):
     package_xml.changed = True
 
 
-@clean_ros
+@glinter
 def check_plugins(package):
     """Check that all the plugins are properly defined.
 

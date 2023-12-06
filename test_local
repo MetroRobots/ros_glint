@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 pytest-3 --capture=no test/ -vv
-pytest-3 --cov-report term-missing --cov ros_introspect --cov clean_ros
+pytest-3 --cov-report term-missing --cov ros_introspect --cov ros_glint

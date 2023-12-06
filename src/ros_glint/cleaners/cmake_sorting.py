@@ -1,4 +1,4 @@
-from ..core import clean_ros
+from ..core import glinter
 from ..config import get_config
 from ..cmake_ordering import CMakeOrderStyle, get_ordered_build_targets, get_ordering, get_sort_key, get_style
 
@@ -46,7 +46,7 @@ def enforce_ordering(cmake, default_style=None):
     cmake.mark_changed()
 
 
-@clean_ros
+@glinter
 def enforce_cmake_ordering(package, config=None):
     if not package.cmake:
         return

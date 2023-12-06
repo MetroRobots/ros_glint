@@ -7,7 +7,7 @@ from stylish_cmake_parser import Command
 
 from ros_introspect.components.setup_py import create_setup_py
 
-from ..core import clean_ros
+from ..core import glinter
 from ..cmake_ordering import insert_in_order
 from .cmake import check_complex_section, section_check, get_multiword_section
 
@@ -217,7 +217,7 @@ def install_section_check(cmake, items, install_type, ros_version, directory=Fal
         section.mark_changed()
 
 
-@clean_ros
+@glinter
 def update_cplusplus_installs(package):
     if not package.cmake:
         return
@@ -238,7 +238,7 @@ def update_cplusplus_installs(package):
             install_section_check(cmake, ['include/'], InstallType.HEADERS, package.ros_version, directory=True)
 
 
-@clean_ros
+@glinter
 def export_cplusplus_libraries(package):
     if package.ros_version == 1:
         return
@@ -297,7 +297,7 @@ def export_cplusplus_libraries(package):
     section_check(package.cmake, export_targets, 'ament_export_targets')
 
 
-@clean_ros
+@glinter
 def update_misc_installs(package):
     extra_files_by_folder = collections.defaultdict(list)
 
@@ -333,7 +333,7 @@ def update_misc_installs(package):
             package.setup_py.include_data_files(files, folder)
 
 
-@clean_ros
+@glinter
 def fix_double_directory_installs(package):
     if not package.cmake:
         return

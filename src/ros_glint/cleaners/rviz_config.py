@@ -1,4 +1,4 @@
-from ..core import clean_ros, root
+from ..core import glinter, root
 from ros_introspect.components.rviz_config import dictionary_subtract
 import yaml
 
@@ -11,7 +11,7 @@ GLOBAL_DEFAULTS = yaml.safe_load(open(DATA_FOLDER / 'rviz_global_defaults.yaml')
 ROBOT_MODEL_LINK_DEFAULTS = {'Alpha': 1, 'Show Axes': False, 'Show Trail': False, 'Value': True}
 
 
-@clean_ros
+@glinter
 def clean_up_rviz_configs(package):
     for rviz_config in package.rviz_config:
         for config in rviz_config.get_class_dicts():

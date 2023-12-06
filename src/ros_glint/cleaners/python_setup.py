@@ -3,7 +3,7 @@ from ros_introspect.package import MiscPackageFile
 from ros_introspect.components.setup_py import create_setup_py, contains_quoted_string, quote_string, unquote_string
 from ros_introspect.components.setup_cfg import SetupCFG
 from ros_introspect.components.source_code import SourceCode
-from ..core import clean_ros
+from ..core import glinter
 from ..cmake_ordering import insert_in_order
 from .cmake import install_cmake_dependencies, section_check
 from .cmake_installs import install_section_check, InstallType
@@ -19,7 +19,7 @@ main()
 """
 
 
-@clean_ros
+@glinter
 def check_python_marker(package):
     buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
 
@@ -36,7 +36,7 @@ def check_python_marker(package):
     package.add_file(MiscPackageFile(marker_path, package))
 
 
-@clean_ros
+@glinter
 def generate_ament_cmake_python_entry_points(package):
     if package.build_type != 'ament_cmake':
         return
@@ -68,7 +68,7 @@ def generate_ament_cmake_python_entry_points(package):
             package.add_file(SourceCode(script_fn, package))
 
 
-@clean_ros
+@glinter
 def sync_package_xml_and_setup_py(package):
     if package.setup_py is None and package.build_type != 'ament_python':
         return
@@ -100,7 +100,7 @@ def has_python_library(package_name, py_src):
     return False
 
 
-@clean_ros
+@glinter
 def check_setup_py(package):
     py_src = package.get_source_by_tags(set(), 'python')
     if not py_src and package.build_type not in ['ament_python', 'catkin']:
@@ -163,7 +163,7 @@ def get_entry_points(package):
     return entries
 
 
-@clean_ros
+@glinter
 def update_python_installs(package):
     # Part 1: Library Setup for ament_cmake
     if package.build_type == 'ament_cmake' and package.get_source_by_tags('pylib'):

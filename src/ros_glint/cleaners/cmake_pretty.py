@@ -1,12 +1,12 @@
 from stylish_cmake_parser import Command, CommandGroup
-from ..core import clean_ros
+from ..core import glinter
 from .cmake import NEWLINE_PLUS_2, NEWLINE_PLUS_4, NEWLINE_PLUS_8
 from .python_setup import CATKIN_INSTALL_PYTHON_PRENAME
 
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 
 
-@clean_ros
+@glinter
 def alphabetize_cmake_sections(package):
     if not package.cmake:
         return
@@ -26,7 +26,7 @@ def alphabetize_cmake_sections(package):
     alphabetize_sections_helper(package.cmake)
 
 
-@clean_ros
+@glinter
 def prettify_catkin_package_cmd(package):
     if not package.cmake:
         return
@@ -36,7 +36,7 @@ def prettify_catkin_package_cmd(package):
         cmd.mark_changed()
 
 
-@clean_ros
+@glinter
 def prettify_package_lists(package):
     if not package.cmake:
         return
@@ -57,7 +57,7 @@ def prettify_package_lists(package):
                         cmd.mark_changed()
 
 
-@clean_ros
+@glinter
 def prettify_msgs_srvs(package):
     if not package.cmake:
         return
@@ -87,7 +87,7 @@ def prettify_msgs_srvs(package):
                     cmd.mark_changed()
 
 
-@clean_ros
+@glinter
 def prettify_installs(package):
     if not package.cmake:
         return
@@ -118,7 +118,7 @@ def prettify_installs(package):
             cmd.mark_changed()
 
 
-@clean_ros
+@glinter
 def prettify_command_groups(package):
     if not package.cmake:
         return

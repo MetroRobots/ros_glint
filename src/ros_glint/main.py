@@ -4,9 +4,9 @@ import pathlib
 import shutil
 import tempfile
 
-from clean_ros import get_functions
-from clean_ros.terminal import color_header
-from clean_ros.diff import check_diff
+from . import get_functions
+from .terminal import color_header
+from .diff import check_diff
 from ros_introspect import find_packages, ROSResources, Package
 from ros_introspect.finder import walk
 
@@ -92,15 +92,14 @@ def main():
         def __call__(self, parser, args, values, option_string=None):
             for value in values:
                 if value not in functions:
-                    raise ValueError(f'{value} not a valid cleaner!')
-            args.cleaners = values
+                    raise ValueError(f'{value} not a valid linter!')
+            args.linters = values
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('cleaners', nargs='*', action=ValidateCleaner, metavar='cleaner', default=[])
+    parser.add_argument('linters', nargs='*', action=ValidateCleaner, metavar='linter', default=[])
     parser.add_argument('-y', '--yes-to-all', action='store_true')
     parser.add_argument('-f', '--folder', type=pathlib.Path, default='.')
     parser.add_argument('-r', '--raise-errors', action='store_true', help='Devel only')
-    parser.add_argument('cleaners', nargs='*', choices=functions.keys(), metavar='cleaner')
 
     args = parser.parse_args()
 
@@ -111,7 +110,7 @@ def main():
 
     for package in pkgs:
         for name, fne in functions.items():
-            if args.cleaners and name not in args.cleaners:
+            if args.linters and name not in args.linters:
                 continue
             try:
                 if args.yes_to_all:

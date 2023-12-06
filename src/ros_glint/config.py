@@ -2,7 +2,7 @@ import pathlib
 import yaml
 
 DOT_ROS_FOLDER = pathlib.Path('~/.ros').expanduser()
-POSSIBLE_CONFIG_FILES = ['roscompile.yaml', 'clean_ros.yaml']
+POSSIBLE_CONFIG_FILES = ['roscompile.yaml', 'glint.yaml']
 CONFIG = None
 
 

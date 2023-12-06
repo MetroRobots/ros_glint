@@ -1,10 +1,10 @@
 import inspect
 import pathlib
 import pytest
-from clean_ros import get_functions
-from clean_ros.diff import get_diff_string
-from clean_ros.terminal import Fore, Style
-from zip_testing import get_test_cases
+from ros_glint import get_functions
+from ros_glint.diff import get_diff_string
+from ros_glint.terminal import Fore, Style
+from zip_interface import get_test_cases
 from betsy_ros import ROSInterface
 
 from ros_introspect import Package, ROSResources
@@ -19,7 +19,7 @@ ros2_config = []
 ros2_ids = []
 ros2_cases = None
 
-cleaner_functions = get_functions()
+linters = get_functions()
 
 for fn in TEST_CASE_FILENAMES:
     p = pathlib.Path(fn)
@@ -75,10 +75,10 @@ def run_case(test_config, cases):
 
         # Run Functions
         for function_name in test_config['functions']:
-            assert function_name in cleaner_functions, f'Missing rule: {function_name}'
-            if function_name not in cleaner_functions:
+            assert function_name in linters, f'Missing rule: {function_name}'
+            if function_name not in linters:
                 return
-            fne = cleaner_functions[function_name]
+            fne = linters[function_name]
             if 'config' in inspect.getfullargspec(fne).args:
                 fne(pp, config=local_config)
             else:

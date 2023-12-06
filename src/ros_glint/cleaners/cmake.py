@@ -1,6 +1,6 @@
 import re
 
-from ..core import clean_ros
+from ..core import glinter
 from ..cmake_ordering import insert_in_order
 from ..util import get_ignore_data
 
@@ -58,7 +58,7 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
     cmake.contents = remove_empty_strings(cmake.contents)
 
 
-@clean_ros
+@glinter
 def remove_empty_cmake_lines(package):
     cmake = package.cmake
     for i, content in enumerate(cmake.contents[:-2]):
@@ -68,7 +68,7 @@ def remove_empty_cmake_lines(package):
     cmake.contents = remove_empty_strings(cmake.contents)
 
 
-@clean_ros
+@glinter
 def remove_boilerplate_cmake_comments(package):
     if not package.cmake:
         return
@@ -245,7 +245,7 @@ def install_cmake_dependencies(package, dependencies, check_catkin_pkg=True):
             insert_in_order(cmake, cmd)
 
 
-@clean_ros
+@glinter
 def check_cmake_dependencies(package):
     if not package.cmake:
         return
@@ -253,7 +253,7 @@ def check_cmake_dependencies(package):
     install_cmake_dependencies(package, dependencies)
 
 
-@clean_ros
+@glinter
 def check_generators(package):
     all_interfaces = package.get_ros_interfaces()
     if not package.cmake or not all_interfaces:
@@ -292,7 +292,7 @@ def check_generators(package):
         section_check(cmake, msg_deps, generate_cmd, zero_okay=True)
 
 
-@clean_ros
+@glinter
 def check_includes(package):
     if not package.cmake:
         return
@@ -322,7 +322,7 @@ def check_includes(package):
                                SectionStyle(name_val_sep='\n  ', val_sep='\n  '))
 
 
-@clean_ros
+@glinter
 def target_catkin_libraries(package):
     if not package.cmake:
         return
@@ -338,7 +338,7 @@ def target_catkin_libraries(package):
     targeted_section_check(package.cmake, command, '', deps, style)
 
 
-@clean_ros
+@glinter
 def check_library_setup(package):
     if not package.cmake:
         return
@@ -395,7 +395,7 @@ def get_matching_add_depends(cmake, search_target):
             return cmd
 
 
-@clean_ros
+@glinter
 def check_exported_dependencies(package):
     if not package.cmake or package.ros_version == 2:
         return
@@ -440,7 +440,7 @@ def check_exported_dependencies(package):
             insert_in_order(cmake, add_deps)
 
 
-@clean_ros
+@glinter
 def remove_old_style_cpp_dependencies(package):
     def remove_pattern(section, pattern):
         prev_len = len(section.values)
