@@ -5,6 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "clean_ros"
 description = "Pure Python library for cleaning ROS packages"
+readme = "README.md"
 authors = [
   { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
 ]
