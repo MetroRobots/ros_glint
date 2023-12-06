@@ -1,9 +1,9 @@
-from .core import get_functions
+from .core import get_linters
 
-from .cleaners import package_xml, cmake, python_setup, ros_interfaces, plugins
-from .cleaners import cmake_installs, cmake_sorting, cmake_pretty
-from .cleaners import rviz_config, misc
+from .glinters import package_xml, cmake, python_setup, ros_interfaces, plugins
+from .glinters import cmake_installs, cmake_sorting, cmake_pretty
+from .glinters import rviz_config, misc
 
-__all__ = ['get_functions', 'package_xml', 'cmake', 'python_setup', 'ros_interfaces', 'plugins',
+__all__ = ['get_linters', 'package_xml', 'cmake', 'python_setup', 'ros_interfaces', 'plugins',
            'cmake_installs', 'cmake_sorting', 'cmake_pretty',
            'rviz_config', 'misc']

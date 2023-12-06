@@ -4,7 +4,7 @@ import pathlib
 import shutil
 import tempfile
 
-from . import get_functions
+from . import get_linters
 from .terminal import color_header
 from .diff import check_diff
 from ros_introspect import find_packages, ROSResources, Package
@@ -86,12 +86,12 @@ def preview_changes(package, fn_name, fne, use_package_name=False):
 
 
 def main():
-    functions = get_functions()
+    linters = get_linters()
 
     class ValidateCleaner(argparse.Action):
         def __call__(self, parser, args, values, option_string=None):
             for value in values:
-                if value not in functions:
+                if value not in linters:
                     raise ValueError(f'{value} not a valid linter!')
             args.linters = values
 
@@ -109,7 +109,7 @@ def main():
     resources.load_from_ros()
 
     for package in pkgs:
-        for name, fne in functions.items():
+        for name, fne in linters.items():
             if args.linters and name not in args.linters:
                 continue
             try:

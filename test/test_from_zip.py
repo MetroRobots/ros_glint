@@ -1,7 +1,7 @@
 import inspect
 import pathlib
 import pytest
-from ros_glint import get_functions
+from ros_glint import get_linters
 from ros_glint.diff import get_diff_string
 from ros_glint.terminal import Fore, Style
 from zip_interface import get_test_cases
@@ -19,7 +19,7 @@ ros2_config = []
 ros2_ids = []
 ros2_cases = None
 
-linters = get_functions()
+linters = get_linters()
 
 for fn in TEST_CASE_FILENAMES:
     p = pathlib.Path(fn)
