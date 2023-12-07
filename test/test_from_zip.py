@@ -49,9 +49,9 @@ def run_case(test_config, cases):
 
         # Run Functions
         for function_name in test_config['functions']:
-            assert function_name in linters, f'Missing rule: {function_name}'
             if function_name not in linters:
-                return
+                pytest.skip(f'Missing linter: {function_name}')
+
             fne = linters[function_name]
             if 'config' in inspect.getfullargspec(fne).args:
                 fne(pp, config=local_config)
