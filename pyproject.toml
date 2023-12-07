@@ -13,6 +13,13 @@ maintainers = [
   { name = "David V. Lu!!", email = "davidvlu@gmail.com" },
 ]
 
+dependencies = [
+  "betsy-ros",
+  "colorama",
+  "ros_introspect",
+  "PyYAML",
+]
+
 requires-python = ">=3.8"
 
 dynamic = ["version"]
@@ -28,6 +35,13 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/MetroRobots/ros_glint"
 "Bug Tracker" = "https://github.com/MetroRobots/ros_glint/issues"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+  "pooch",
+]
 
 [tool.hatch]
 version.source = "vcs"
