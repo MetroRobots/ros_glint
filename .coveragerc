@@ -1,0 +1,11 @@
+[report]
+omit =
+    *_version.py
+    *finder.py
+    *terminal.py
+    *diff.py
+    *config.py
+    */package.py
+    */ros_resources.py
+    */util.py
+    */main.py
