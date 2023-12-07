@@ -1,12 +1,7 @@
 import subprocess
-try:
-    from colorama import Fore, Back, Style, init
-    init()
-except ImportError:  # fallback so that the imported classes always exist
-    class ColorFallback():
-        def __getattr__(self, name):
-            return ''
-    Fore = Back = Style = ColorFallback()
+from colorama import Fore, Back, Style, init
+
+init()
 
 
 def color_diff(diff, buffer_size=5):
@@ -60,8 +55,8 @@ def color_header(s, fore='WHITE', back='BLUE'):
     return header
 
 
-def color_text(s, fore='YELLOW'):
-    return getattr(Fore, fore) + s + Style.RESET_ALL
+def color_text(s, fore='YELLOW', bright=False):
+    return (Style.BRIGHT if bright else '') + getattr(Fore, fore) + s + Style.RESET_ALL
 
 
 def query_yes_no(question, default='no'):

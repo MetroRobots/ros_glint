@@ -3,7 +3,7 @@ import pooch
 import pytest
 from ros_glint import get_linters
 from ros_glint.diff import get_diff_string
-from ros_glint.terminal import Fore, Style
+from ros_glint.terminal import color_text
 from zip_interface import get_test_cases
 from betsy_ros import ROSInterface
 
@@ -19,12 +19,12 @@ TEST_DATA = [
 linters = get_linters()
 
 
-def files_match(pkg_in, pkg_out, filename, show_diff=True):
+def files_match(pkg_in, pkg_out, filename):
     """Return true if the contents of the given file are the same in each package. Otherwise maybe show the diff."""
     generated_contents = pkg_in.get_contents(filename).rstrip()
     canonical_contents = pkg_out.get_contents(filename).rstrip()
     ret = generated_contents == canonical_contents
-    if show_diff and not ret:
+    if not ret:
         print(get_diff_string(generated_contents, canonical_contents, filename))
     return ret
 
@@ -35,9 +35,7 @@ def run_case(test_config, cases):
     with cases[test_config['in']] as pkg_in:
         pkg_out = cases[test_config['out']]
         root = pkg_in.root
-        if 'subpkg' in test_config:
-            root = root / test_config['subpkg']
-        pp = Package(root)
+        pkg_obj = Package(root)
         local_config = test_config.get('config', {})
 
         # Initialize ROS Resources
@@ -54,20 +52,20 @@ def run_case(test_config, cases):
 
             fne = linters[function_name]
             if 'config' in inspect.getfullargspec(fne).args:
-                fne(pp, config=local_config)
+                fne(pkg_obj, config=local_config)
             else:
-                fne(pp)
-        pp.save()
+                fne(pkg_obj)
+        pkg_obj.save()
 
         folder_diff = pkg_in.compare_filesets(pkg_out)
 
-        def jp(paths):
-            return ', '.join(map(str, paths))
+        s = '{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
+                                       ','.join(test_config['functions']))
+        print(color_text(s, 'BLUE', bright=True))
 
-        print(Fore.BLUE + Style.BRIGHT, end='')
-        print('{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
-                                         ','.join(test_config['functions'])), end='')
-        print(Style.RESET_ALL)
+        def jp(paths):
+            # Join Paths
+            return ', '.join(map(str, paths))
 
         assert len(folder_diff['deleted']) == 0, \
             f'These files should have been deleted but weren\'t: {jp(folder_diff["deleted"])}'
