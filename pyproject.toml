@@ -32,6 +32,13 @@ glint_ros = "ros_glint.main:main"
 Homepage = "https://github.com/MetroRobots/ros_glint"
 "Bug Tracker" = "https://github.com/MetroRobots/ros_glint/issues"
 
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+  "pooch",
+]
+
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "src/ros_glint/_version.py"

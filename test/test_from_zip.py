@@ -1,5 +1,5 @@
 import inspect
-import pathlib
+import pooch
 import pytest
 from ros_glint import get_linters
 from ros_glint.diff import get_diff_string
@@ -9,40 +9,14 @@ from betsy_ros import ROSInterface
 
 from ros_introspect import Package, ROSResources
 
-TEST_CASE_FILENAMES = ['../ros1_test_data.zip', '../ros2_test_data.zip']
-
-ros1_config = []
-ros1_ids = []
-ros1_cases = None
-
-ros2_config = []
-ros2_ids = []
-ros2_cases = None
+URL_TEMPLATE = 'https://github.com/DLu/roscompile_test_data/raw/{}/test_data.zip'
+TEST_DATA = [
+    # (branch, known_hash)
+    ('ros1', '2100c19c912c6044194e7a77dad3d002e3b22f5206b171c3f127069b87dbc662'),
+    ('ros2', '97fa59fdc742a60e57cf17643b70eb21aa26a6967cc64d364371480665fb5635'),
+]
 
 linters = get_linters()
-
-for fn in TEST_CASE_FILENAMES:
-    p = pathlib.Path(fn)
-    v = p.name.split('_')[0]
-    config, test_data = get_test_cases(p)
-
-    configs_to_test = []
-    test_ids = []
-
-    c = 0
-    for test_config in config:
-        configs_to_test.append(test_config)
-        test_ids.append(f'{v}_test_{c:03d}')
-        c += 1
-
-    if v == 'ros1':
-        ros1_config = configs_to_test
-        ros1_cases = test_data
-        ros1_ids = test_ids
-    else:
-        ros2_config = configs_to_test
-        ros2_cases = test_data
-        ros2_ids = test_ids
 
 
 def files_match(pkg_in, pkg_out, filename, show_diff=True):
@@ -103,11 +77,18 @@ def run_case(test_config, cases):
             assert files_match(pkg_in, pkg_out, filename), 'The contents of {} do not match!'.format(filename)
 
 
-@pytest.mark.parametrize('test_config', ros1_config, ids=ros1_ids)
-def test_ros1_from_zip(test_config):
-    run_case(test_config, ros1_cases)
+parameters = []
+test_ids = []
+
+for branch, known_hash in TEST_DATA:
+    file_path = pooch.retrieve(URL_TEMPLATE.format(branch), known_hash=known_hash)
+    config, test_data = get_test_cases(file_path)
+
+    for i, test_config in enumerate(config):
+        parameters.append((test_config, test_data))
+        test_ids.append(f'{branch}_test_{i:03d}')
 
 
-@pytest.mark.parametrize('test_config', ros2_config, ids=ros2_ids)
-def test_ros2_from_zip(test_config):
-    run_case(test_config, ros2_cases)
+@pytest.mark.parametrize('test_config, test_data', parameters, ids=test_ids)
+def test_from_zip(test_config, test_data):
+    run_case(test_config, test_data)
