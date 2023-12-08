@@ -1,10 +1,7 @@
 import collections
-import pathlib
 
 
 _glinter_functions = collections.OrderedDict()
-
-root = pathlib.Path(__file__).parent.parent.parent
 
 
 # Decorator function for gathering all the functions

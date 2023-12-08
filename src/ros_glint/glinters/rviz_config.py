@@ -1,12 +1,11 @@
-from ..core import glinter, root
+from ..core import glinter
+from ..util import get_data_file
 from ros_introspect.components.rviz_config import dictionary_subtract
 import yaml
 
-DATA_FOLDER = root / 'data'
-
-CLASS_DEFAULTS = yaml.safe_load(open(DATA_FOLDER / 'rviz_class_defaults.yaml'))
-GENERIC_DEFAULTS = yaml.safe_load(open(DATA_FOLDER / 'rviz_generic_defaults.yaml'))
-GLOBAL_DEFAULTS = yaml.safe_load(open(DATA_FOLDER / 'rviz_global_defaults.yaml'))
+CLASS_DEFAULTS = yaml.safe_load(get_data_file('rviz_class_defaults.yaml'))
+GENERIC_DEFAULTS = yaml.safe_load(get_data_file('rviz_generic_defaults.yaml'))
+GLOBAL_DEFAULTS = yaml.safe_load(get_data_file('rviz_global_defaults.yaml'))
 
 ROBOT_MODEL_LINK_DEFAULTS = {'Alpha': 1, 'Show Axes': False, 'Show Trail': False, 'Value': True}
 

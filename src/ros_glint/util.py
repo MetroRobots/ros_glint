@@ -1,7 +1,7 @@
 import os
+import importlib_resources as resources
 import re
 import stat
-from .core import root
 
 TRAILING_PATTERN = re.compile(r'^(.*[^\w])\w+\n$')
 
@@ -15,17 +15,20 @@ def set_executable(fn, state):
     os.chmod(fn, existing_permissions | flags)
 
 
+def get_data_file(name):
+    return (resources.files('ros_glint.data') / name).read_text()
+
+
 def get_ignore_data(name, variables, add_newline=True):
     def get_ignore_data_helper(basename, add_newline=True):
-        fn = root / 'data' / (basename + '.ignore')
         lines = []
-        for s in open(fn):
-            if s == '\n':
+        for s in get_data_file(basename + '.ignore').split('\n'):
+            if s == '':
                 continue
             if add_newline:
-                lines.append(s)
+                lines.append(s + '\n')
             else:
-                lines.append(s[:-1])
+                lines.append(s)
         return lines
 
     ignore_lines = get_ignore_data_helper(name, add_newline)
