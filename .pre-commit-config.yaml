@@ -21,6 +21,7 @@ repos:
   - id: codespell
     args:
     - --write-changes
+    - --skip=src/ros_glint/data/*ignore
   rev: v2.2.6
 - repo: https://github.com/adrienverge/yamllint
   hooks:
