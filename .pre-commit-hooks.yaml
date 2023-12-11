@@ -1,7 +1,7 @@
 - id: prettify_installs
   name: prettify_installs
   description: AA
-  entry: glint_hook prettify_installs
+  entry: glint_hook prettify_installs -f
   language: python
   files: CMakeLists.txt$
   additional_dependencies:
