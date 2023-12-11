@@ -1,7 +1,22 @@
-import subprocess
 from colorama import Fore, Back, Style, init
+import shutil
+import sys
 
 init()
+
+
+if sys.stdout.encoding == 'utf-8':
+    TL = '╭'
+    TR = '╮'
+    BL = '╘'
+    BR = '╛'
+    TC = '─'
+    BC = '═'
+    VC = '│'
+else:
+    TL = TR = BL = BR = '+'
+    TC = BC = '-'
+    VC = '|'
 
 
 def color_diff(diff, buffer_size=5):
@@ -39,19 +54,15 @@ def color_diff(diff, buffer_size=5):
         yield '...'
 
 
-COLUMNS = None
-
-
 def color_header(s, fore='WHITE', back='BLUE'):
-    global COLUMNS
-    if not COLUMNS:
-        COLUMNS = list(map(int, subprocess.check_output(['stty', 'size']).split()))[1]
+    ts = shutil.get_terminal_size()
     header = ''
-    line = '+' + ('-' * (COLUMNS - 2)) + '+'
-    header += getattr(Fore, fore) + getattr(Back, back) + line
-    n = COLUMNS - len(s) - 3
-    header += '| ' + s + ' ' * n + '|'
-    header += line + Style.RESET_ALL
+    header += getattr(Fore, fore) + getattr(Back, back)
+    header += TL + (TC * (ts.columns - 2)) + TR + '\n'
+    header += VC + ' ' + Style.BRIGHT
+    header += s.ljust(ts.columns - 3, ' ') + Style.NORMAL + VC + '\n'
+    header += BL + (BC * (ts.columns - 2)) + BR
+    header += Style.RESET_ALL
     return header
 
 
