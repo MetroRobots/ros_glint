@@ -1,0 +1,11 @@
+Enabled: true
+Topic:
+  Depth: 5
+  Durability Policy: Volatile
+  History Policy: Keep Last
+  Reliability Policy: Reliable
+  Value: ''
+
+Unreliable: false
+
+Queue Size: 10
