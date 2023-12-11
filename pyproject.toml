@@ -16,6 +16,7 @@ maintainers = [
 dependencies = [
   "betsy-ros",
   "colorama",
+  "importlib-resources",
   "ros_introspect",
   "PyYAML",
 ]
