@@ -6,7 +6,7 @@ import tempfile
 
 from . import get_linters
 from .terminal import color_header
-from .diff import check_diff
+from .diff import get_diff_string
 from ros_introspect import find_packages, ROSResources, Package
 from ros_introspect.finder import walk
 
@@ -35,17 +35,30 @@ def copy_text_files(src_folder, dst_folder):
                 pass
 
 
-def get_diff(pkg0, pkg1):
-    keys0 = set(pkg0.components_by_name.keys())
-    keys1 = set(pkg1.components_by_name.keys())
-    diff = []
-    for key in keys0.union(keys1):
+def read_or_empty(filepath):
+    """Read an existing file or return an empty string"""
+    if filepath.exists():
         try:
-            ret = check_diff(pkg0.root, pkg1.root, key)
+            return open(filepath).read()
         except UnicodeDecodeError:
+            return ''
+    else:
+        return ''
+
+
+def get_diff(pkg0, pkg1):
+    names0 = set(pkg0.components_by_name.keys())
+    names1 = set(pkg1.components_by_name.keys())
+    diff = []
+    for rel_filename in names0.union(names1):
+        contents0 = read_or_empty(pkg0.root / rel_filename)
+        contents1 = read_or_empty(pkg1.root / rel_filename)
+
+        if contents0 == contents1:
             continue
-        if ret:
-            diff.append(ret)
+
+        diff.append(get_diff_string(contents0, contents1, rel_filename))
+
     return diff
 
 
@@ -99,6 +112,7 @@ def main():
     parser.add_argument('linters', nargs='*', action=ValidateCleaner, metavar='linter', default=[])
     parser.add_argument('-y', '--yes-to-all', action='store_true')
     parser.add_argument('-f', '--folder', type=pathlib.Path, default='.')
+    parser.add_argument('-s', '--skip-ros-load', action='store_true')
     parser.add_argument('-r', '--raise-errors', action='store_true', help='Devel only')
 
     args = parser.parse_args()
@@ -106,7 +120,9 @@ def main():
     pkgs = list(find_packages(args.folder))
 
     resources = ROSResources.get()
-    resources.load_from_ros()
+
+    if not args.skip_ros_load:
+        resources.load_from_ros()
 
     for package in pkgs:
         for name, fne in linters.items():
