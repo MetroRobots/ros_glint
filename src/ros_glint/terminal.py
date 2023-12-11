@@ -1,6 +1,22 @@
-from colorama import Fore, Style, init
+from colorama import Fore, Back, Style, init
+import shutil
+import sys
 
 init()
+
+
+if sys.stdout.encoding == 'utf-8':
+    TL = '╭'
+    TR = '╮'
+    BL = '╘'
+    BR = '╛'
+    TC = '─'
+    BC = '═'
+    VC = '│'
+else:
+    TL = TR = BL = BR = '+'
+    TC = BC = '-'
+    VC = '|'
 
 
 def color_diff(diff, buffer_size=5):
@@ -36,6 +52,18 @@ def color_diff(diff, buffer_size=5):
     if buffer:
         yield from buffer[-buffer_size:]
         yield '...'
+
+
+def color_header(s, fore='WHITE', back='BLUE'):
+    ts = shutil.get_terminal_size()
+    header = ''
+    header += getattr(Fore, fore) + getattr(Back, back)
+    header += TL + (TC * (ts.columns - 2)) + TR + '\n'
+    header += VC + ' ' + Style.BRIGHT
+    header += s.ljust(ts.columns - 3, ' ') + Style.NORMAL + VC + '\n'
+    header += BL + (BC * (ts.columns - 2)) + BR
+    header += Style.RESET_ALL
+    return header
 
 
 def color_text(s, fore='YELLOW', bright=False):
