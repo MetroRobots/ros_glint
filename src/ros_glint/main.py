@@ -114,8 +114,14 @@ def main():
     parser.add_argument('-f', '--folder', type=pathlib.Path, default='.')
     parser.add_argument('-s', '--skip-ros-load', action='store_true')
     parser.add_argument('-r', '--raise-errors', action='store_true', help='Devel only')
+    parser.add_argument('-c', '--set-return-code', action='store_true')
+    parser.add_argument('--hook', action='store_true')
 
     args = parser.parse_args()
+
+    if args.hook:
+        args.yes_to_all = True
+        args.set_return_code = True
 
     pkgs = list(find_packages(args.folder))
 
@@ -124,6 +130,8 @@ def main():
     if not args.skip_ros_load:
         resources.load_from_ros()
 
+    ret = 0
+
     for package in pkgs:
         for name, fne in linters.items():
             if args.linters and name not in args.linters:
@@ -131,7 +139,9 @@ def main():
             try:
                 if args.yes_to_all:
                     fne(package)
-                    package.save()
+                    if package.has_changes():
+                        package.save()
+                        ret = -1
                     continue
 
                 if preview_changes(package, name, fne, len(pkgs) > 1):
@@ -147,3 +157,6 @@ def main():
                 click.secho(f'Exception occurred while running {name}: {e}', fg='red')
                 if args.raise_errors:
                     raise
+
+    if args.set_return_code:
+        return ret
