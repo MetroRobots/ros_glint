@@ -33,6 +33,9 @@ classifiers = [
   "Topic :: Software Development",
 ]
 
+[project.scripts]
+glint_ros = "ros_glint.main:main"
+
 [project.urls]
 Homepage = "https://github.com/MetroRobots/ros_glint"
 "Bug Tracker" = "https://github.com/MetroRobots/ros_glint/issues"
