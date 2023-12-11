@@ -35,6 +35,7 @@ classifiers = [
 
 [project.scripts]
 glint_ros = "ros_glint.main:main"
+glint_hook = "ros_glint.glint_hook:main"
 
 [project.urls]
 Homepage = "https://github.com/MetroRobots/ros_glint"

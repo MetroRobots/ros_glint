@@ -1,7 +1,9 @@
 - id: prettify_installs
   name: prettify_installs
   description: AA
-  entry: glint_ros --hook prettify_installs
+  entry: glint_hook prettify_installs
   language: python
   files: CMakeLists.txt$
+  additional_dependencies:
+  - click
   # additional_dependencies: [prettier@2.8.7, "@prettier/plugin-xml@2.2.0"]
