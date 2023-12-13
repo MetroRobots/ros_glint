@@ -33,7 +33,11 @@ def run_case(test_config, cases):
     resources = ROSResources.get()
 
     with cases[test_config['in']] as pkg_in:
-        pkg_out = cases[test_config['out']]
+        if test_config['in'] == test_config['out']:
+            pkg_out = pkg_in.copy()
+        else:
+            pkg_out = cases[test_config['out']]
+
         root = pkg_in.root
         pkg_obj = Package(root)
         local_config = test_config.get('config', {})
