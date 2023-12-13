@@ -50,14 +50,6 @@ class ROSCompilePackageFiles:
         elif filename in self.pkg_files:
             return self.pkg_files[filename].replace('\r\n', '\n')
 
-    def compare_filesets(self, other_package):
-        in_keys = self.get_filenames()
-        out_keys = other_package.get_filenames()
-        matches = in_keys.intersection(out_keys)
-        missed_deletes = in_keys - out_keys
-        missed_generations = out_keys - in_keys
-        return {'matches': sorted(matches), 'deleted': sorted(missed_deletes), 'added': sorted(missed_generations)}
-
     def write(self):
         for fn, contents in self.pkg_files.items():
             outfile = self.root / fn
