@@ -74,7 +74,6 @@ def prettify_msgs_srvs(package):
             if len(section.values) > 1:
                 set_style_attribute(section, 'name_val_sep', NEWLINE_PLUS_4)
                 set_style_attribute(section, 'val_sep', NEWLINE_PLUS_4)
-            cmd.mark_changed()
     # ROS 2 version
     for cmd in package.cmake.content_map['rosidl_generate_interfaces']:
         for section in cmd.get_real_sections():
