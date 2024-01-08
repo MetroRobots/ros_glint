@@ -5,8 +5,8 @@ from ros_introspect.components.setup_cfg import SetupCFG
 from ros_introspect.components.source_code import SourceCode
 from ..core import glinter
 from ..cmake_ordering import insert_in_order
-from .cmake import install_cmake_dependencies, section_check
-from .cmake_installs import install_section_check, InstallType
+from .cmake import section_check
+from .cmake_installs import install_section_check, InstallType, check_cmake_python_buildtype
 from ..util import set_executable
 import re
 
@@ -22,8 +22,9 @@ main()
 @glinter
 def check_python_marker(package):
     buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
+    pylib_src = package.get_source_by_tags('pylib', 'python')
 
-    if package.build_type != 'ament_python' and 'ament_cmake_python' not in buildtools:
+    if package.build_type != 'ament_python' and 'ament_cmake_python' not in buildtools and not pylib_src:
         return
     resource_folder = package.root / 'resource'
     marker_path = resource_folder / package.name
@@ -166,13 +167,8 @@ def get_entry_points(package):
 @glinter
 def update_python_installs(package):
     # Part 1: Library Setup for ament_cmake
-    if package.build_type == 'ament_cmake' and package.get_source_by_tags('pylib'):
-        acp = 'ament_cmake_python'
-        build_tools = package.package_xml.get_packages_by_tag('buildtool_depend')
-        if acp not in build_tools:
-            package.package_xml.insert_new_packages('buildtool_depend', [acp])
-
-        install_cmake_dependencies(package, {acp})
+    if 'ament_cmake' in package.build_type and package.get_source_by_tags('pylib'):
+        check_cmake_python_buildtype(package)
 
         section_check(package.cmake, ['${PROJECT_NAME}'], 'ament_python_install_package')
 
@@ -250,5 +246,5 @@ def update_python_installs(package):
                 if not contains_quoted_string(console_scripts, entry):
                     console_scripts.append(quote_string(entry))
                     package.setup_py.changed = True
-    elif package.build_type == 'ament_cmake':
+    elif 'ament_cmake' in package.build_type:
         install_section_check(package.cmake, exec_fns, InstallType.PYTHON, package.ros_version)
