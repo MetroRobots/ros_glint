@@ -97,3 +97,10 @@ for branch, known_hash in TEST_DATA:
 @pytest.mark.parametrize('test_config, test_data', parameters, ids=test_ids)
 def test_from_zip(test_config, test_data):
     run_case(test_config, test_data)
+
+
+@pytest.mark.parametrize('test_config, test_data', parameters, ids=test_ids)
+def test_idempotency_from_zip(test_config, test_data):
+    test_config_x = dict(test_config)
+    test_config_x['in'] = test_config_x['out']
+    run_case(test_config_x, test_data)
