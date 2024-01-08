@@ -40,8 +40,6 @@ def remove_useless_files(package):
 
 @glinter
 def misc_xml_formatting(package):
-    if package.package_xml.contents != package.package_xml.output():
-        package.package_xml.changed = True
+    package.package_xml.force_regeneration()
     for config in package.plugin_xml:
-        if config.contents != config.output():
-            config.changed = True
+        config.force_regeneration()

@@ -10,9 +10,7 @@ STANDARD = {
 def clean_whitespace_from_interface_definition(package):
     # Formerly remove_trailing_whitespace_from_generators
     for interface in package.get_ros_interfaces():
-        new_contents = interface.output()
-        if new_contents != interface.contents:
-            interface.changed = True
+        interface.force_regeneration()
 
 
 @glinter
