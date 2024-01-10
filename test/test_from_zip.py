@@ -12,8 +12,8 @@ from ros_introspect import Package, ROSResources
 URL_TEMPLATE = 'https://github.com/DLu/roscompile_test_data/raw/{}/test_data.zip'
 TEST_DATA = [
     # (branch, known_hash)
-    ('ros1', '2100c19c912c6044194e7a77dad3d002e3b22f5206b171c3f127069b87dbc662'),
-    ('ros2', '97fa59fdc742a60e57cf17643b70eb21aa26a6967cc64d364371480665fb5635'),
+    ('ros1', '84bf97b92d2ceb8d4369ed0d6fd8a01fabaf3006034fb7710d448b8cfe9885d9'),
+    ('ros2', 'cf23d832e0cf56c8e160c0178af81e865c615fb330fb26604ddf031fc51a280a'),
 ]
 
 linters = get_linters()
