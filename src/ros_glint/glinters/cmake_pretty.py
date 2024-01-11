@@ -6,6 +6,14 @@ from .python_setup import CATKIN_INSTALL_PYTHON_PRENAME
 SHOULD_ALPHABETIZE = ['COMPONENTS', 'DEPENDENCIES', 'FILES', 'CATKIN_DEPENDS']
 
 
+def set_style_attribute(section, attribute, new_value):
+    existing_value = getattr(section.style, attribute)
+    if existing_value == new_value:
+        return
+    setattr(section.style, attribute, new_value)
+    section.mark_changed()
+
+
 @glinter
 def alphabetize_cmake_sections(package):
     if not package.cmake:
@@ -32,8 +40,7 @@ def prettify_catkin_package_cmd(package):
         return
     for cmd in package.cmake.content_map['catkin_package']:
         for section in cmd.get_real_sections():
-            section.style.prename = NEWLINE_PLUS_4
-        cmd.mark_changed()
+            set_style_attribute(section, 'prename', NEWLINE_PLUS_4)
 
 
 @glinter
@@ -54,7 +61,7 @@ def prettify_package_lists(package):
                     if key not in acceptable_styles:
                         section.style.name_val_sep = NEWLINE_PLUS_8
                         section.style.val_sep = NEWLINE_PLUS_8
-                        cmd.mark_changed()
+                        section.mark_changed()
 
 
 @glinter
@@ -65,26 +72,17 @@ def prettify_msgs_srvs(package):
     for cmd in package.cmake.content_map['add_message_files'] + package.cmake.content_map['add_service_files']:
         for section in cmd.get_real_sections():
             if len(section.values) > 1:
-                section.style.name_val_sep = NEWLINE_PLUS_4
-                section.style.val_sep = NEWLINE_PLUS_4
-            cmd.mark_changed()
+                set_style_attribute(section, 'name_val_sep', NEWLINE_PLUS_4)
+                set_style_attribute(section, 'val_sep', NEWLINE_PLUS_4)
     # ROS 2 version
     for cmd in package.cmake.content_map['rosidl_generate_interfaces']:
         for section in cmd.get_real_sections():
             if section.name == '' and section == cmd.sections[0]:
-                if section.style.val_sep != NEWLINE_PLUS_4:
-                    section.style.val_sep = NEWLINE_PLUS_4
-                    cmd.mark_changed()
+                set_style_attribute(section, 'val_sep', NEWLINE_PLUS_4)
             elif section.name == 'DEPENDENCIES':
-                if section.style.prename != NEWLINE_PLUS_2:
-                    section.style.prename = NEWLINE_PLUS_2
-                    cmd.mark_changed()
-                if section.style.val_sep != NEWLINE_PLUS_4:
-                    section.style.val_sep = NEWLINE_PLUS_4
-                    cmd.mark_changed()
-                if section.style.name_val_sep != NEWLINE_PLUS_4:
-                    section.style.name_val_sep = NEWLINE_PLUS_4
-                    cmd.mark_changed()
+                set_style_attribute(section, 'prename', NEWLINE_PLUS_2)
+                set_style_attribute(section, 'val_sep', NEWLINE_PLUS_4)
+                set_style_attribute(section, 'name_val_sep', NEWLINE_PLUS_4)
 
 
 @glinter
@@ -95,7 +93,7 @@ def prettify_installs(package):
         cmd.sections = [s for s in cmd.sections if not isinstance(s, str)]
         if not cmd.sections:
             continue
-        cmd.mark_changed()
+
         if '\n' in cmd.sections[0].style.prename:
             new_style = cmd.sections[0].style.prename
         else:
@@ -104,18 +102,16 @@ def prettify_installs(package):
         zeroed = False
         for section in cmd.sections[1:]:
             if len(section.values) == 0:
-                section.style.prename = new_style
+                set_style_attribute(section, 'prename', new_style)
                 zeroed = True
             elif not zeroed:
-                section.style.prename = new_style
+                set_style_attribute(section, 'prename', new_style)
             else:
-                section.style.prename = ''
+                set_style_attribute(section, 'prename', '')
 
     for cmd in package.cmake.content_map['catkin_install_python']:
         section = cmd.sections[1]
-        if section.style.prename != CATKIN_INSTALL_PYTHON_PRENAME:
-            section.style.prename = CATKIN_INSTALL_PYTHON_PRENAME
-            cmd.mark_changed()
+        set_style_attribute(section, 'prename', CATKIN_INSTALL_PYTHON_PRENAME)
 
 
 @glinter
