@@ -49,6 +49,8 @@ def run_case(test_config, cases):
                 fne(pkg_obj, config=local_config)
             else:
                 fne(pkg_obj)
+
+        components_with_changes = [comp.rel_fn for comp in pkg_obj if comp.changed]
         pkg_obj.save()
 
         s = '{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
@@ -70,7 +72,10 @@ def run_case(test_config, cases):
             contents_in = pkg_in.get_contents(filename).rstrip()
             contents_out = pkg_out.get_contents(filename).rstrip()
 
-            if contents_in != contents_out:
+            if contents_in == contents_out:
+                if filename in components_with_changes and test_config['in'] == test_config['out']:
+                    problems.append(f'File {filename} has invisible changes')
+            else:
                 print(get_diff_string(contents_in, contents_out, filename))
                 problems.append('The contents of {} do not match!'.format(filename))
 
@@ -92,3 +97,10 @@ for branch, known_hash in TEST_DATA:
 @pytest.mark.parametrize('test_config, test_data', parameters, ids=test_ids)
 def test_from_zip(test_config, test_data):
     run_case(test_config, test_data)
+
+
+@pytest.mark.parametrize('test_config, test_data', parameters, ids=test_ids)
+def test_idempotency_from_zip(test_config, test_data):
+    test_config_x = dict(test_config)
+    test_config_x['in'] = test_config_x['out']
+    run_case(test_config_x, test_data)
