@@ -5,8 +5,9 @@ from ros_introspect.components.setup_cfg import SetupCFG
 from ros_introspect.components.source_code import SourceCode
 from ..core import glinter
 from ..cmake_ordering import insert_in_order
-from .cmake import install_cmake_dependencies, section_check
-from .cmake_installs import install_section_check, InstallType
+from ..python_types import get_python_usage, PythonUsage
+from .cmake import section_check
+from .cmake_installs import install_section_check, InstallType, check_cmake_python_buildtype
 from ..util import set_executable
 import re
 
@@ -21,10 +22,9 @@ main()
 
 @glinter
 def check_python_marker(package):
-    buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
-
-    if package.build_type != 'ament_python' and 'ament_cmake_python' not in buildtools:
+    if get_python_usage(package) == PythonUsage.NONE:
         return
+
     resource_folder = package.root / 'resource'
     marker_path = resource_folder / package.name
     if marker_path.exists():
@@ -166,15 +166,12 @@ def get_entry_points(package):
 @glinter
 def update_python_installs(package):
     # Part 1: Library Setup for ament_cmake
-    if package.build_type == 'ament_cmake' and package.get_source_by_tags('pylib'):
-        acp = 'ament_cmake_python'
-        build_tools = package.package_xml.get_packages_by_tag('buildtool_depend')
-        if acp not in build_tools:
-            package.package_xml.insert_new_packages('buildtool_depend', [acp])
+    python_usage = get_python_usage(package)
+    if python_usage != PythonUsage.NONE:
+        check_cmake_python_buildtype(package)
 
-        install_cmake_dependencies(package, {acp})
-
-        section_check(package.cmake, ['${PROJECT_NAME}'], 'ament_python_install_package')
+        if python_usage == PythonUsage.MIXED_CMAKE_PYTHON:
+            section_check(package.cmake, ['${PROJECT_NAME}'], 'ament_python_install_package')
 
     # Part 2: Executables
     execs = package.get_source_by_tags('pyscript', 'python')
@@ -214,9 +211,6 @@ def update_python_installs(package):
             section_check(package.cmake, exec_fns, cmd, 'PROGRAMS')
 
     elif package.build_type == 'ament_python':
-        if package.setup_py is None:
-            create_setup_py(package)
-
         if package.setup_cfg is None:
             package.add_file(SetupCFG(package.root / 'setup.cfg', package))
 
@@ -250,5 +244,5 @@ def update_python_installs(package):
                 if not contains_quoted_string(console_scripts, entry):
                     console_scripts.append(quote_string(entry))
                     package.setup_py.changed = True
-    elif package.build_type == 'ament_cmake':
+    elif python_usage == PythonUsage.MIXED_CMAKE_PYTHON:
         install_section_check(package.cmake, exec_fns, InstallType.PYTHON, package.ros_version)
