@@ -9,7 +9,8 @@ from ros_introspect.components.setup_py import create_setup_py
 
 from ..core import glinter
 from ..cmake_ordering import insert_in_order
-from .cmake import check_complex_section, section_check, get_multiword_section
+from ..python_types import get_python_usage, PythonUsage
+from .cmake import check_complex_section, section_check, get_multiword_section, install_cmake_dependencies
 
 
 class InstallType(IntEnum):
@@ -297,6 +298,20 @@ def export_cplusplus_libraries(package):
     section_check(package.cmake, export_targets, 'ament_export_targets')
 
 
+def check_cmake_python_buildtype(package):
+    if package.build_type == 'ament_cmake':
+        acp = 'ament_cmake_python'
+        build_tools = package.package_xml.get_packages_by_tag('buildtool_depend')
+        if acp not in build_tools:
+            package.package_xml.insert_new_packages('buildtool_depend', [acp])
+            package.build_type = acp
+
+        install_cmake_dependencies(package, {acp})
+
+    if package.setup_py is None:
+        create_setup_py(package)
+
+
 @glinter
 def update_misc_installs(package):
     extra_files_by_folder = collections.defaultdict(list)
@@ -324,13 +339,12 @@ def update_misc_installs(package):
 
         for subfolder in existing_install_folders:
             install_section_check(package.cmake, [], InstallType.SHARE, package.ros_version, subfolder=subfolder)
-    buildtools = package.package_xml.get_packages_by_tag('buildtool_depend')
-    if package.build_type == 'ament_python' or 'ament_cmake_python' in buildtools:
-        if package.setup_py is None:
-            create_setup_py(package)
 
-        for folder, files in sorted(extra_files_by_folder.items()):
-            package.setup_py.include_data_files(files, folder)
+    if get_python_usage(package) != PythonUsage.NONE:
+        check_cmake_python_buildtype(package)
+        if package.ros_version == 2:
+            for folder, files in sorted(extra_files_by_folder.items()):
+                package.setup_py.include_data_files(files, folder)
 
 
 @glinter
