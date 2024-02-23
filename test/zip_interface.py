@@ -1,7 +1,6 @@
 import collections
 import os
 import pathlib
-import shutil
 import tempfile
 import yaml
 import zipfile
@@ -14,24 +13,25 @@ class ROSCompilePackageFiles:
     def __init__(self, package_name, pkg_files, executables):
         self.package_name = package_name
         self.is_written = False
-        self.root = self.get_input_root()
+        self.tempdir = None
+        self.root = None
         self.pkg_files = pkg_files
         self.executables = executables
 
     def copy(self):
         return ROSCompilePackageFiles(self.package_name, self.pkg_files, self.executables)
 
-    def get_input_root(self):
-        return pathlib.Path(tempfile.gettempdir()) / self.package_name
-
     def __enter__(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = pathlib.Path(self.tempdir.name)
         self.write()
         self.is_written = True
         return self
 
     def __exit__(self, a_type, value, traceback):
         self.is_written = False
-        self.clear()
+        self.root = None
+        self.tempdir = None
 
     def get_filenames(self):
         if self.is_written:
@@ -50,17 +50,7 @@ class ROSCompilePackageFiles:
         elif filename in self.pkg_files:
             return self.pkg_files[filename].replace('\r\n', '\n')
 
-    def compare_filesets(self, other_package):
-        in_keys = self.get_filenames()
-        out_keys = other_package.get_filenames()
-        matches = in_keys.intersection(out_keys)
-        missed_deletes = in_keys - out_keys
-        missed_generations = out_keys - in_keys
-        return {'matches': sorted(matches), 'deleted': sorted(missed_deletes), 'added': sorted(missed_generations)}
-
     def write(self):
-        self.clear()
-        self.root.mkdir()
         for fn, contents in self.pkg_files.items():
             outfile = self.root / fn
             outfile.parent.mkdir(exist_ok=True, parents=True)
@@ -68,10 +58,6 @@ class ROSCompilePackageFiles:
                 f.write(contents)
             if fn in self.executables:
                 set_executable(outfile, True)
-
-    def clear(self):
-        if self.root.exists():
-            shutil.rmtree(self.root)
 
     def __repr__(self):
         return self.package_name
