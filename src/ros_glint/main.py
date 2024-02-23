@@ -109,11 +109,16 @@ def main():
             args.linters = values
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('linters', nargs='*', action=ValidateCleaner, metavar='linter', default=[])
-    parser.add_argument('-y', '--yes-to-all', action='store_true')
-    parser.add_argument('-f', '--folder', type=pathlib.Path, default='.')
-    parser.add_argument('-s', '--skip-ros-load', action='store_true')
-    parser.add_argument('-r', '--raise-errors', action='store_true', help='Devel only')
+    parser.add_argument('linters', nargs='*', action=ValidateCleaner, metavar='linter', default=[],
+                        help='By default, run all linters. If any are specified here, only those specified are run.')
+    parser.add_argument('-f', '--folder', type=pathlib.Path, default='.',
+                        help='The folder to search for ROS packages in. Defaults to the current directory.')
+    parser.add_argument('-y', '--yes-to-all', action='store_true',
+                        help='Non-interactive mode that accepts all suggestions.')
+    parser.add_argument('-s', '--skip-ros-load', action='store_true',
+                        help='Avoid loading ROS resources, useful in scripting environments.')
+    parser.add_argument('-r', '--raise-errors', action='store_true',
+                        help='Devel only. Raise errors instead of suppressing them.')
 
     args = parser.parse_args()
 
