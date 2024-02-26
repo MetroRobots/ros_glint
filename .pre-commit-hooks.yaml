@@ -1,0 +1,174 @@
+- id: check_manifest_dependencies
+  name: Check Manifest Dependencies
+  entry: glint_hook check_manifest_dependencies -f
+  language: python
+- id: enforce_manifest_ordering
+  name: Enforce Manifest Ordering
+  entry: glint_hook enforce_manifest_ordering -f
+  language: python
+- id: remove_empty_export_tag
+  name: Remove Empty Export Tag
+  entry: glint_hook remove_empty_export_tag -f
+  language: python
+- id: enforce_manifest_tabbing
+  name: Enforce Manifest Tabbing
+  entry: glint_hook enforce_manifest_tabbing -f
+  language: python
+- id: remove_empty_manifest_lines
+  name: Remove Empty Manifest Lines
+  entry: glint_hook remove_empty_manifest_lines -f
+  language: python
+- id: remove_boilerplate_manifest_comments
+  name: Remove Boilerplate Manifest Comments
+  entry: glint_hook remove_boilerplate_manifest_comments -f
+  language: python
+- id: greedy_depend_tag
+  name: Greedy Depend Tag
+  entry: glint_hook greedy_depend_tag -f
+  language: python
+- id: update_people
+  name: Update People
+  entry: glint_hook update_people -f
+  language: python
+- id: update_license
+  name: Update License
+  entry: glint_hook update_license -f
+  language: python
+- id: remove_empty_cmake_lines
+  name: Remove Empty CMake Lines
+  entry: glint_hook remove_empty_cmake_lines -f
+  language: python
+- id: remove_boilerplate_cmake_comments
+  name: Remove Boilerplate CMake Comments
+  entry: glint_hook remove_boilerplate_cmake_comments -f
+  language: python
+- id: check_cmake_dependencies
+  name: Check CMake Dependencies
+  entry: glint_hook check_cmake_dependencies -f
+  language: python
+- id: check_generators
+  name: Check Generators
+  entry: glint_hook check_generators -f
+  language: python
+- id: check_includes
+  name: Check Includes
+  entry: glint_hook check_includes -f
+  language: python
+- id: target_catkin_libraries
+  name: Target Catkin Libraries
+  entry: glint_hook target_catkin_libraries -f
+  language: python
+- id: check_library_setup
+  name: Check Library Setup
+  entry: glint_hook check_library_setup -f
+  language: python
+- id: check_exported_dependencies
+  name: Check Exported Dependencies
+  entry: glint_hook check_exported_dependencies -f
+  language: python
+- id: remove_old_style_cpp_dependencies
+  name: Remove Old Style C++ Dependencies
+  entry: glint_hook remove_old_style_cpp_dependencies -f
+  language: python
+- id: update_cplusplus_installs
+  name: Update C++ Installs
+  entry: glint_hook update_cplusplus_installs -f
+  language: python
+- id: export_cplusplus_libraries
+  name: Export C++ Libraries
+  entry: glint_hook export_cplusplus_libraries -f
+  language: python
+- id: update_misc_installs
+  name: Update Miscellaneous Installs
+  entry: glint_hook update_misc_installs -f
+  language: python
+- id: fix_double_directory_installs
+  name: Fix Double Directory Installs
+  entry: glint_hook fix_double_directory_installs -f
+  language: python
+- id: check_python_marker
+  name: Check Python Marker
+  entry: glint_hook check_python_marker -f
+  language: python
+- id: generate_ament_cmake_python_entry_points
+  name: Generate Ament CMake Python Entry Points
+  entry: glint_hook generate_ament_cmake_python_entry_points -f
+  language: python
+- id: sync_package_xml_and_setup_py
+  name: Sync Package XML And Setup Py
+  entry: glint_hook sync_package_xml_and_setup_py -f
+  language: python
+- id: check_setup_py
+  name: Check Setup Py
+  entry: glint_hook check_setup_py -f
+  language: python
+- id: update_python_installs
+  name: Update Python Installs
+  entry: glint_hook update_python_installs -f
+  language: python
+- id: clean_whitespace_from_interface_definition
+  name: Clean Whitespace From Interface Definition
+  entry: glint_hook clean_whitespace_from_interface_definition -f
+  language: python
+- id: fill_in_msg_package_names
+  name: Fill In Msg Package Names
+  entry: glint_hook fill_in_msg_package_names -f
+  language: python
+- id: check_plugins
+  name: Check Plugins
+  entry: glint_hook check_plugins -f
+  language: python
+- id: enforce_cmake_ordering
+  name: Enforce CMake Ordering
+  entry: glint_hook enforce_cmake_ordering -f
+  language: python
+- id: alphabetize_cmake_sections
+  name: Alphabetize CMake Sections
+  entry: glint_hook alphabetize_cmake_sections -f
+  language: python
+- id: prettify_catkin_package_cmd
+  name: Prettify Catkin Package Cmd
+  entry: glint_hook prettify_catkin_package_cmd -f
+  language: python
+- id: prettify_package_lists
+  name: Prettify Package Lists
+  entry: glint_hook prettify_package_lists -f
+  language: python
+- id: prettify_msgs_srvs
+  name: Prettify Msgs Srvs
+  entry: glint_hook prettify_msgs_srvs -f
+  language: python
+- id: prettify_installs
+  name: Prettify Installs
+  entry: glint_hook prettify_installs -f
+  language: python
+- id: prettify_command_groups
+  name: Prettify Command Groups
+  entry: glint_hook prettify_command_groups -f
+  language: python
+- id: clean_up_rviz_configs
+  name: Clean Up RViz Configs
+  entry: glint_hook clean_up_rviz_configs -f
+  language: python
+- id: check_dynamic_reconfigure
+  name: Check Dynamic Reconfigure
+  entry: glint_hook check_dynamic_reconfigure -f
+  language: python
+- id: remove_useless_files
+  name: Remove Useless Files
+  entry: glint_hook remove_useless_files -f
+  language: python
+- id: misc_xml_formatting
+  name: Miscellaneous XML Formatting
+  entry: glint_hook misc_xml_formatting -f
+  language: python
+- id: prettify_cmake
+  name: Prettify CMake
+  entry: glint_hook prettify_catkin_package_cmd prettify_package_lists prettify_msgs_srvs prettify_installs
+    prettify_command_groups -f
+  language: python
+- id: remove_boilerplate
+  name: Remove Boilerplate
+  entry: glint_hook remove_empty_export_tag remove_boilerplate_manifest_comments remove_boilerplate_cmake_comments
+    -f
+  language: python
