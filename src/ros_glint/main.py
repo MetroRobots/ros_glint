@@ -109,11 +109,14 @@ def main():
             args.linters = values
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('linters', nargs='*', action=ValidateCleaner, metavar='linter', default=[])
-    parser.add_argument('-y', '--yes-to-all', action='store_true')
-    parser.add_argument('-f', '--folder', type=pathlib.Path, default='.')
-    parser.add_argument('-s', '--skip-ros-load', action='store_true')
-    parser.add_argument('-r', '--raise-errors', action='store_true', help='Devel only')
+    parser.add_argument('linters', nargs='*', action=ValidateCleaner, metavar='linter', default=[],
+                        help='By default, run all linters. If any are specified here, only those specified are run.')
+    parser.add_argument('-f', '--folder', type=pathlib.Path, default='.',
+                        help='The folder to search for ROS packages in. Defaults to the current directory.')
+    parser.add_argument('-y', '--yes-to-all', action='store_true',
+                        help='Non-interactive mode that accepts all suggestions.')
+    parser.add_argument('-s', '--skip-ros-load', action='store_true',
+                        help='Avoid loading ROS resources, useful in scripting environments.')
 
     args = parser.parse_args()
 
@@ -145,5 +148,4 @@ def main():
                 exit(0)
             except Exception as e:
                 click.secho(f'Exception occurred while running {name}: {e}', fg='red')
-                if args.raise_errors:
-                    raise
+                raise
