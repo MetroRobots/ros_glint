@@ -79,7 +79,7 @@
   entry: glint_hook export_cplusplus_libraries -f
   language: python
 - id: update_misc_installs
-  name: Update Miscelaneous Installs
+  name: Update Miscellaneous Installs
   entry: glint_hook update_misc_installs -f
   language: python
 - id: fix_double_directory_installs
@@ -159,6 +159,16 @@
   entry: glint_hook remove_useless_files -f
   language: python
 - id: misc_xml_formatting
-  name: Miscelaneous XML Formatting
+  name: Miscellaneous XML Formatting
   entry: glint_hook misc_xml_formatting -f
+  language: python
+- id: prettify_cmake
+  name: Prettify CMake
+  entry: glint_hook prettify_catkin_package_cmd prettify_package_lists prettify_msgs_srvs prettify_installs
+    prettify_command_groups -f
+  language: python
+- id: remove_boilerplate
+  name: Remove Boilerplate
+  entry: glint_hook remove_empty_export_tag remove_boilerplate_manifest_comments remove_boilerplate_cmake_comments
+    -f
   language: python
