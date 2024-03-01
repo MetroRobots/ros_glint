@@ -15,7 +15,7 @@ repos:
   - id: check-ast
   - id: double-quote-string-fixer
   - id: requirements-txt-fixer
-  rev: v4.4.0
+  rev: v4.5.0
 - repo: https://github.com/codespell-project/codespell
   hooks:
   - id: codespell
@@ -30,7 +30,7 @@ repos:
     - --format
     - parsable
     - --strict
-  rev: v1.32.0
+  rev: v1.33.0
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   hooks:
   - id: yamlfmt
