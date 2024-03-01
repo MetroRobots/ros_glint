@@ -241,7 +241,7 @@ def update_cplusplus_installs(package):
 
 @glinter
 def export_cplusplus_libraries(package):
-    if package.ros_version == 1:
+    if package.ros_version == 1 or not package.cmake:
         return
     libraries = package.cmake.get_libraries()
     if not libraries:

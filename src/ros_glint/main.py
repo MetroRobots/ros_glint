@@ -142,7 +142,7 @@ def main():
                 if preview_changes(package, name, fne, len(pkgs) > 1):
                     if click.confirm('Would you like to make this change?'):
                         fne(package)
-                        package.write()
+                        package.save()
                     print('')
 
             except click.Abort:
