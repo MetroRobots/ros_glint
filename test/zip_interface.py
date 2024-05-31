@@ -5,7 +5,7 @@ import tempfile
 import yaml
 import zipfile
 
-from ros_introspect.finder import walk
+from ros_introspect.finder import walk, is_hidden
 from ros_glint.util import set_executable
 
 
@@ -34,13 +34,16 @@ class ROSCompilePackageFiles:
         self.tempdir = None
 
     def get_filenames(self):
+        the_files = []
         if self.is_written:
-            the_files = []
             for subpath in walk(self.root):
                 the_files.append(subpath)
-            return set(the_files)
         else:
-            return set(self.pkg_files.keys())
+            for subpath in self.pkg_files.keys():
+                if is_hidden(subpath):
+                    continue
+                the_files.append(subpath)
+        return set(the_files)
 
     def get_contents(self, filename):
         if self.is_written:
