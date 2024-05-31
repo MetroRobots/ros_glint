@@ -1,5 +1,6 @@
 from stylish_cmake_parser import Command, SectionStyle
 from ros_introspect.package import MiscPackageFile
+from ros_introspect.components.package_xml import PEOPLE_TAGS
 from ros_introspect.components.setup_py import create_setup_py, contains_quoted_string, quote_string, unquote_string
 from ros_introspect.components.setup_cfg import SetupCFG
 from ros_introspect.components.source_code import SourceCode
@@ -73,23 +74,28 @@ def sync_package_xml_and_setup_py(package):
     if package.setup_py is None and package.build_type != 'ament_python':
         return
 
-    if package.setup_py is None:
-        create_setup_py(package)
+    create_setup_py(package)  # If needed
 
+    setup_py = package.setup_py
     for tag in ['version', 'description', 'license']:
         tags = package.package_xml.get_elements_by_tags([tag])
         if not tags:
             continue
-        value = tags[0].childNodes[0].nodeValue
-        package.setup_py.args[tag] = repr(value)
+        setup_py.set_arg(tag, tags[0].childNodes[0].nodeValue)
 
-    for maintainer in package.package_xml.get_elements_by_tags(['maintainer']):
-        # TODO: Expand for author
-        # TODO: Joint multiple people?
-        package.setup_py.args['maintainer'] = repr(maintainer.childNodes[0].nodeValue)
-        package.setup_py.args['maintainer_email'] = repr(maintainer.getAttribute('email'))
+    for tag_name in PEOPLE_TAGS:
+        names = []
+        emails = []
+        for person in package.package_xml.get_people_by_tag(tag_name):
+            if person.name:
+                names.append(person.name)
+            if person.email:
+                emails.append(person.email)
 
-    package.setup_py.changed = True
+        if names:
+            setup_py.set_arg(tag_name, ', '.join(names))
+        if emails:
+            setup_py.set_arg(f'{tag_name}_email', ', '.join(emails))
 
 
 def has_python_library(package_name, py_src):

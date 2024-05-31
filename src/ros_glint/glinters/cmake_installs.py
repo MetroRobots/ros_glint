@@ -308,8 +308,7 @@ def check_cmake_python_buildtype(package):
 
         install_cmake_dependencies(package, {acp})
 
-    if package.setup_py is None:
-        create_setup_py(package)
+    create_setup_py(package)
 
 
 @glinter
