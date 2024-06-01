@@ -77,13 +77,13 @@ def sync_package_xml_and_setup_py(package):
         create_setup_py(package)
 
     for tag in ['version', 'description', 'license']:
-        tags = package.manifest.get_elements_by_tags([tag])
+        tags = package.package_xml.get_elements_by_tags([tag])
         if not tags:
             continue
         value = tags[0].childNodes[0].nodeValue
         package.setup_py.args[tag] = repr(value)
 
-    for maintainer in package.manifest.get_elements_by_tags(['maintainer']):
+    for maintainer in package.package_xml.get_elements_by_tags(['maintainer']):
         # TODO: Expand for author
         # TODO: Joint multiple people?
         package.setup_py.args['maintainer'] = repr(maintainer.childNodes[0].nodeValue)
