@@ -13,7 +13,7 @@ URL_TEMPLATE = 'https://github.com/DLu/roscompile_test_data/raw/{}/test_data.zip
 TEST_DATA = [
     # (branch, known_hash)
     ('ros1', '84bf97b92d2ceb8d4369ed0d6fd8a01fabaf3006034fb7710d448b8cfe9885d9'),
-    ('ros2', 'cf23d832e0cf56c8e160c0178af81e865c615fb330fb26604ddf031fc51a280a'),
+    ('ros2', '5cfbd9c39ee239674d5c9e79f759f72655f869f43a0d0562dcc187cba7cc8efa'),
 ]
 
 linters = get_linters()
