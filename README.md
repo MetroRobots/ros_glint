@@ -5,6 +5,12 @@
 ROS Glint is a linter for ROS 1 and ROS 2 packages.
 It is a pure Python version of the ROS 1 package [roscompile](https://github.com/DLu/roscompile/blob/main/roscompile/README.md).
 
+# Installation
+
+[![PyPI version](https://badge.fury.io/py/ros-glint.svg)](https://badge.fury.io/py/ros-glint)
+
+    sudo pip3 install ros-glint
+
 # Running from the Command Line
 
 Installing the Python package installs the `glint_ros` command. (Note: There's 5 million commands that start with `ros`. [citation needed] The command is `glint_ros` for ease of access/tab completion)
