@@ -241,7 +241,7 @@ def update_cplusplus_installs(package):
 
 @glinter
 def export_cplusplus_libraries(package):
-    if package.ros_version == 1:
+    if package.ros_version == 1 or not package.cmake:
         return
     libraries = package.cmake.get_libraries()
     if not libraries:
@@ -308,8 +308,7 @@ def check_cmake_python_buildtype(package):
 
         install_cmake_dependencies(package, {acp})
 
-    if package.setup_py is None:
-        create_setup_py(package)
+    create_setup_py(package)
 
 
 @glinter

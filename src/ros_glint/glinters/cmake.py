@@ -61,6 +61,8 @@ def remove_cmake_comments_helper(cmake, ignorables, replacement=''):
 @glinter
 def remove_empty_cmake_lines(package):
     cmake = package.cmake
+    if not cmake:
+        return
     for i, content in enumerate(cmake.contents[:-2]):
         if str(content)[-1] == '\n' and cmake.contents[i + 1] == '\n' and cmake.contents[i + 2] == '\n':
             cmake.contents[i + 1] = ''
