@@ -19,6 +19,7 @@ dependencies = [
   "importlib-resources",
   "ros_introspect",
   "PyYAML",
+  "click"
 ]
 
 requires-python = ">=3.8"
