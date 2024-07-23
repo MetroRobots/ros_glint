@@ -86,7 +86,14 @@ parameters = []
 test_ids = []
 
 for branch, known_hash in TEST_DATA:
-    file_path = pooch.retrieve(URL_TEMPLATE.format(branch), known_hash=known_hash)
+    import pathlib
+    if False:
+        file_path = pooch.retrieve(URL_TEMPLATE.format(branch), known_hash=known_hash)
+    elif branch == 'ros1':
+        file_path = pathlib.Path('../../roscompile_test_data/test_data.zip')
+        print(file_path.resolve())
+    else:
+        file_path = pathlib.Path('../../roscompile_test_data2/test_data.zip')
     config, test_data = get_test_cases(file_path)
 
     for i, test_config in enumerate(config):
