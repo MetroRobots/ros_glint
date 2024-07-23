@@ -137,17 +137,19 @@ def check_setup_py(package):
         if 'packages' not in package.setup_py.args:
             package.setup_py.args['packages'] = []
 
-        for pkg in packages:
-            if contains_quoted_string(package.setup_py.args['packages'], pkg):
-                continue
-            if package.setup_py.declare_package_name and pkg == package.name:
-                value = 'package_name'
-                if value in package.setup_py.args['packages']:
+        # Not a list is probably packages=find_packages(exclude=['test']),
+        if isinstance(package.setup_py.args['packages'], list):
+            for pkg in packages:
+                if contains_quoted_string(package.setup_py.args['packages'], pkg):
                     continue
-            else:
-                value = quote_string(pkg)
-            package.setup_py.args['packages'].append(value)
-            package.setup_py.changed = True
+                if package.setup_py.declare_package_name and pkg == package.name:
+                    value = 'package_name'
+                    if value in package.setup_py.args['packages']:
+                        continue
+                else:
+                    value = quote_string(pkg)
+                package.setup_py.args['packages'].append(value)
+                package.setup_py.changed = True
 
         if package_dir:
             # Do this after packages just for standard ordering
