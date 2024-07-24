@@ -1,6 +1,8 @@
 import inspect
 import pooch
 import pytest
+import yaml
+
 from ros_glint import get_linters
 from ros_glint.diff import get_diff_string
 from ros_glint.terminal import color_text
@@ -56,6 +58,10 @@ def run_case(test_config, cases):
         s = '{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
                                        ','.join(test_config['functions']))
         print(color_text(s, 'BLUE', bright=True))
+        if local_config:
+            s = yaml.dump(local_config)
+            for line in s.split('\n'):
+                print(color_text(' ' * 56 + line, 'BLUE'))
 
         # Compute the differences
         filenames_in = pkg_in.get_filenames()
