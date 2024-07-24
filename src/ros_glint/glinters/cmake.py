@@ -252,6 +252,10 @@ def check_cmake_dependencies(package):
     if not package.cmake:
         return
     dependencies = package.get_dependencies(DependencyType.BUILD)
+
+    # Special handling because message_generation is never a run dep
+    dependencies.discard('message_generation')
+
     install_cmake_dependencies(package, dependencies)
 
 
@@ -286,7 +290,7 @@ def check_generators(package):
 
     msg_deps = set()
     for ros_interface in all_interfaces:
-        msg_deps |= ros_interface.get_dependencies(DependencyType.BUILD)
+        msg_deps |= ros_interface.get_message_deps()
 
     if msg_deps:
         section_check(cmake, msg_deps, generate_cmd, 'DEPENDENCIES', zero_okay=True)
