@@ -25,14 +25,39 @@ def run_case(test_config, cases):
     resources = ROSResources.get()
 
     with cases[test_config['in']] as pkg_in:
+        root = pkg_in.root
+        local_config = test_config.get('config', {})
+
+        # Print header
+        if 'parse_error' in test_config:
+            parse_error = test_config['parse_error']
+            s = '{:25} >> {:25}'.format(test_config['in'], parse_error)
+            print(color_text(s, 'CYAN', bright=True))
+        else:
+            s = '{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
+                                           ','.join(test_config['functions']))
+            print(color_text(s, 'BLUE', bright=True))
+            if local_config:
+                s = yaml.dump(local_config)
+                for line in s.split('\n'):
+                    print(color_text(' ' * 56 + line, 'BLUE'))
+
+            parse_error = None
+
+        try:
+            pkg_obj = Package(root)
+        except Exception as e:
+            if not parse_error:
+                raise
+            assert parse_error in str(e)
+            return
+        if parse_error:
+            raise RuntimeError(f'Should have raised {parse_error}')
+
         if test_config['in'] == test_config['out']:
             pkg_out = pkg_in.copy()
         else:
             pkg_out = cases[test_config['out']]
-
-        root = pkg_in.root
-        pkg_obj = Package(root)
-        local_config = test_config.get('config', {})
 
         # Initialize ROS Resources
         resources.packages = set(test_config.get('pkgs', []))
@@ -54,14 +79,6 @@ def run_case(test_config, cases):
 
         components_with_changes = [comp.rel_fn for comp in pkg_obj if comp.changed]
         pkg_obj.save()
-
-        s = '{:25} >> {:25} {}'.format(test_config['in'], test_config['out'],
-                                       ','.join(test_config['functions']))
-        print(color_text(s, 'BLUE', bright=True))
-        if local_config:
-            s = yaml.dump(local_config)
-            for line in s.split('\n'):
-                print(color_text(' ' * 56 + line, 'BLUE'))
 
         # Compute the differences
         filenames_in = pkg_in.get_filenames()
@@ -114,6 +131,8 @@ def test_from_zip(test_config, test_data):
 
 @pytest.mark.parametrize('test_config, test_data', parameters, ids=test_ids)
 def test_idempotency_from_zip(test_config, test_data):
+    if 'out' not in test_config:
+        return
     test_config_x = dict(test_config)
     test_config_x['in'] = test_config_x['out']
     run_case(test_config_x, test_data)
