@@ -18,32 +18,18 @@ def check_manifest_dependencies(package, config=None):
     package.package_xml.add_dependencies(dep_dict, prefer_depend_tag)
 
     # Special handling for interface dependencies
-    # because not all run deps are build deps
-    if not package.get_ros_interfaces():
+    if not package.get_ros_interfaces() or package.package_xml.xml_format == 1:
         return
     if package.ros_version == 1:
-        build_dep = 'message_generation'
-        run_dep = 'message_runtime'
         export = 'message_runtime'
         export_tag = 'build_export_depend'
     else:
-        build_dep = 'rosidl_default_generators'
-        run_dep = 'rosidl_default_runtime'
         export = 'rosidl_interface_packages'
         export_tag = 'member_of_group'
 
-    if package.package_xml.xml_format == 1:
-        pairs = [('build_depend', build_dep),
-                 ('run_depend', run_dep)]
-    else:
-        pairs = [('build_depend', build_dep),
-                 (export_tag, export),
-                 ('exec_depend', run_dep)]
-        package.package_xml.remove_dependencies('depend', [build_dep, run_dep])
-    for tag, msg_pkg in pairs:
-        existing = package.package_xml.get_packages_by_tag(tag)
-        if msg_pkg not in existing:
-            package.package_xml.insert_new_packages(tag, [msg_pkg])
+    existing = package.package_xml.get_packages_by_tag(export_tag)
+    if export not in existing:
+        package.package_xml.insert_new_packages(export_tag, [export])
 
 
 @glinter
@@ -248,7 +234,10 @@ def update_people(package, config=None):
 def update_license(package, config=None):
     if config is None:
         config = get_config()  # pragma: no cover
-    if 'default_license' not in config or 'TODO' not in package.package_xml.get_license():
-        return
 
-    package.package_xml.set_license(config['default_license'])
+    existing_license = package.package_xml.get_license()
+    if 'default_license' not in config:
+        if existing_license is None:
+            package.package_xml.set_license('TODO')
+    elif not existing_license or 'TODO' in existing_license:
+        package.package_xml.set_license(config['default_license'])

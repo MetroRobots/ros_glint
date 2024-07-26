@@ -15,14 +15,13 @@ repos:
   - id: check-ast
   - id: double-quote-string-fixer
   - id: requirements-txt-fixer
-  rev: v4.5.0
+  rev: v4.6.0
 - repo: https://github.com/codespell-project/codespell
   hooks:
   - id: codespell
     args:
     - --write-changes
-    - --skip=src/ros_glint/data/*ignore
-  rev: v2.2.6
+  rev: v2.3.0
 - repo: https://github.com/adrienverge/yamllint
   hooks:
   - id: yamllint
@@ -30,7 +29,7 @@ repos:
     - --format
     - parsable
     - --strict
-  rev: v1.33.0
+  rev: v1.35.1
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   hooks:
   - id: yamlfmt
@@ -50,10 +49,10 @@ repos:
 - repo: https://github.com/hhatto/autopep8
   hooks:
   - id: autopep8
-  rev: v2.0.4
+  rev: v2.3.1
 - repo: https://github.com/PyCQA/flake8
   hooks:
   - id: flake8
-  rev: 6.1.0
+  rev: 7.1.0
 ci:
   autoupdate_schedule: quarterly

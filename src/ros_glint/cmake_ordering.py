@@ -1,6 +1,8 @@
 from ros_introspect.components.cmake import ROS_TESTING_FLAGS, is_testing_group
 from stylish_cmake_parser import Command, CommandGroup
 from enum import IntEnum
+import sys
+from colorama import Fore
 
 BUILD_TARGET_COMMANDS = ['qt5_wrap_cpp', 'add_library', 'add_executable', 'add_rostest',
                          'target_include_directories', 'add_dependencies', 'target_link_libraries',
@@ -95,7 +97,7 @@ def get_ordering_index(command_name, ordering):
             return i
     if command_name:
         # TODO: Raise Warning
-        print(f'\tUnsure of ordering for {command_name}')
+        print(f'\t{Fore.YELLOW}Unsure of ordering for {command_name}{Fore.RESET}', file=sys.stderr)
     return len(ordering)
 
 
