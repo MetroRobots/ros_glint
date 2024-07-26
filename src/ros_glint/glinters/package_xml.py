@@ -234,7 +234,10 @@ def update_people(package, config=None):
 def update_license(package, config=None):
     if config is None:
         config = get_config()  # pragma: no cover
-    if 'default_license' not in config or 'TODO' not in package.package_xml.get_license():
-        return
 
-    package.package_xml.set_license(config['default_license'])
+    existing_license = package.package_xml.get_license()
+    if 'default_license' not in config:
+        if existing_license is None:
+            package.package_xml.set_license('TODO')
+    elif not existing_license or 'TODO' in existing_license:
+        package.package_xml.set_license(config['default_license'])
