@@ -17,7 +17,7 @@ dependencies = [
   "betsy-ros",
   "colorama",
   "importlib-resources",
-  "ros_introspect",
+  "ros_introspect >= 0.3.0",
   "PyYAML",
   "click"
 ]
