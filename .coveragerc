@@ -9,4 +9,3 @@ omit =
     */ros_resources.py
     */util.py
     */main.py
-    */glint_hook.py
