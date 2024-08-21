@@ -110,6 +110,8 @@ def prettify_installs(package):
                 set_style_attribute(section, 'prename', '')
 
     for cmd in package.cmake.content_map['catkin_install_python']:
+        if len(cmd.sections) <= 1:
+            continue
         section = cmd.sections[1]
         set_style_attribute(section, 'prename', CATKIN_INSTALL_PYTHON_PRENAME)
 
