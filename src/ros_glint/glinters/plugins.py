@@ -89,6 +89,7 @@ def check_plugins(package):
             if rel_fn in deps:
                 return library
 
+    all_plugin_info = []
     for source_file in package.source_code:
         plugin_info = source_file.search_lines_for_pattern(PLUGIN_RE)
         if not plugin_info:
@@ -97,29 +98,33 @@ def check_plugins(package):
         if library is None:
             continue
         for pkg1, name1, pkg2, name2 in plugin_info:
-            # Create file if needed
-            if pkg2 not in existing_plugins:
-                xml_filename = f'{pkg2}_plugins.xml'
-                full_path = package.root / xml_filename
-                p_xml = PluginXML(full_path, package)
-                package.plugin_xml.append(p_xml)
-                existing_plugins[pkg2] = [p_xml]
+            all_plugin_info.append((pkg1, name1, pkg2, name2, library))
 
-            # Make sure plugins are properly exported
-            for plugin_xml in existing_plugins[pkg2]:
-                if package.ros_version == 1:
-                    if plugin_xml.rel_fn not in defined_plugins[pkg2]:
-                        add_to_package_xml(package.package_xml, plugin_xml, pkg2)
-                else:
-                    section_check(package.cmake, [pkg2, str(plugin_xml.rel_fn)],
-                                  'pluginlib_export_plugin_description_file',
-                                  '')
+    # Sort by parent package name
+    for pkg1, name1, pkg2, name2, library in sorted(all_plugin_info):
+        # Create file if needed
+        if pkg2 not in existing_plugins:
+            xml_filename = f'{pkg2}_plugins.xml'
+            full_path = package.root / xml_filename
+            p_xml = PluginXML(full_path, package)
+            package.plugin_xml.append(p_xml)
+            existing_plugins[pkg2] = [p_xml]
 
-            # Make sure the class is in the files
-            if not contains_library(existing_plugins[pkg2], library, pkg1, name1):
-                # insert into first
-                xml = existing_plugins[pkg2][0]
-                xml.insert_new_class(library, pkg1, name1, pkg2, name2)
+        # Make sure plugins are properly exported
+        for plugin_xml in existing_plugins[pkg2]:
+            if package.ros_version == 1:
+                if plugin_xml.rel_fn not in defined_plugins[pkg2]:
+                    add_to_package_xml(package.package_xml, plugin_xml, pkg2)
+            else:
+                section_check(package.cmake, [pkg2, str(plugin_xml.rel_fn)],
+                              'pluginlib_export_plugin_description_file',
+                              '')
+
+        # Make sure the class is in the files
+        if not contains_library(existing_plugins[pkg2], library, pkg1, name1):
+            # insert into first
+            xml = existing_plugins[pkg2][0]
+            xml.insert_new_class(library, pkg1, name1, pkg2, name2)
 
         if package.ros_version > 1:
             install_cmake_dependencies(package, {'ament_cmake_ros'})
