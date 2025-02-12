@@ -7,7 +7,7 @@ It is a pure Python version of the ROS 1 package [roscompile](https://github.com
 
 # Installation
 
-[![PyPI version](https://badge.fury.io/py/ros-glint.svg)](https://badge.fury.io/py/ros-glint)
+[![PyPI version](https://badge.fury.io/py/ros-glint.svg)](https://badge.fury.io/py/ros-glint) [![codecov](https://codecov.io/gh/MetroRobots/ros_glint/graph/badge.svg?token=9SR4Pol6Sg)](https://codecov.io/gh/MetroRobots/ros_glint)
 
     sudo pip3 install ros-glint
 
