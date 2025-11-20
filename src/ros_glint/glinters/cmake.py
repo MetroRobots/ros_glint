@@ -7,7 +7,7 @@ from ..util import get_ignore_data
 from ros_introspect.package import DependencyType
 from ros_introspect.components.source_code import CPP_INCLUDE1, CPP_INCLUDE2
 from ros_introspect.ros_resources import ROSResources
-from stylish_cmake_parser import Command, CommandGroup, SectionStyle
+from stylish_cmake_parser import Command, CommandGroup, SectionStyle, CommandSequence
 ALL_SPACES = re.compile(r' +')
 NEWLINE_PLUS_2 = '\n  '
 NEWLINE_PLUS_4 = '\n    '
@@ -471,3 +471,51 @@ def remove_old_style_cpp_dependencies(package):
             global_changed = True
     if global_changed:
         check_exported_dependencies(package)
+
+@glinter
+def update_cmake_version(package):
+    if not package.cmake:
+        return
+
+    for cmake in package.cmakes:
+        for cmd in cmake.content_map['cmake_minimum_required']:
+            section = cmd.get_section('VERSION')
+            assert section
+            version_s = section.values[0]
+            version = tuple(map(int, version_s.split('.')))
+            assert version[0] == 3
+            if version[1] < 5:
+                section.values = ['3.10.2']
+                section.mark_changed()
+    
+
+@glinter
+def update_cpp_11_req(package):
+    if not package.cmake:
+        return
+
+    for cmake in package.cmakes:
+        for cmd in cmake.content_map['set_directory_properties']:
+            section = cmd.get_section('COMPILE_OPTIONS')
+            OLD = '"-std=c++11;-Wall;-Werror"'
+            if OLD not in section.values:
+                continue
+            section.values = ['"-Wall;-Werror"']
+            section.mark_changed()
+
+            index = cmake.contents.index(cmd)
+
+            initial_cmd = Command('if')
+            initial_cmd.add_section('NOT', ['"${CMAKE_CXX_STANDARD}"'])
+            set_cmd = Command('set')
+            set_cmd.add_section('CMAKE_CXX_STANDARD', ['14'])
+            contents = CommandSequence(['\n    ', set_cmd, '\n'])
+            close_cmd = Command('endif')
+
+            group = CommandGroup(initial_cmd, contents, close_cmd, cmake)
+            cmake.insert(group, index + 1)
+
+
+
+
+    #set_directory_properties(PROPERTIES COMPILE_OPTIONS "-std=c++11;-Wall;-Werror")
