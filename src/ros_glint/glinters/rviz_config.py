@@ -55,7 +55,9 @@ def clean_up_rviz_configs(package):
                 if 'Frames' in config:
                     frames = config['Frames']
                     for key in list(frames.keys()):
-                        if frames[key]['Value']:
+                        if (isinstance(frames[key], dict) and frames[key]['Value']) or (
+                            isinstance(frames[key], bool) and frames[key]
+                        ):
                             del frames[key]
                             rviz_config.changed = True
                     if not frames:
@@ -63,3 +65,24 @@ def clean_up_rviz_configs(package):
 
         if dictionary_subtract(rviz_config.contents, GLOBAL_DEFAULTS):
             rviz_config.changed = True
+
+
+@glinter
+def round_rviz_configs(package):
+    def round_rviz(d):
+        for k, v in d.items():
+            if isinstance(v, dict):
+                round_rviz(v)
+            elif isinstance(v, list):
+                for el in v:
+                    round_rviz(el)
+            elif isinstance(v, float):
+                rv = round(v, 4)
+                if v == rv:
+                    continue
+                elif abs(v - rv) < 1e-4:
+                    d[k] = rv
+                    rviz_config.changed = True
+
+    for rviz_config in package.rviz_config:
+        round_rviz(rviz_config.contents)

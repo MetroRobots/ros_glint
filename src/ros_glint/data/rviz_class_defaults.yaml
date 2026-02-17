@@ -198,6 +198,8 @@ rviz/LaserScan:
   Topic: ''
 Map:
   Alpha: 0.699999988079071
+  Binary representation: false
+  Binary threshold: 100
   Color Scheme: map
   Draw Behind: false
   Update Topic:
@@ -419,11 +421,16 @@ RobotModel:
     Expand Link Details: false
     Expand Tree: false
     Link Tree Style: ''
+  Mass Properties:
+    Inertia: false
+    Mass: false
   Robot Description: robot_description
   TF Prefix: ''
   Update Interval: 0
   Visual Enabled: true
 TF:
+  Filter (blacklist): ''
+  Filter (whitelist): ''
   Frame Timeout: 15
   Frames:
     All Enabled: true
@@ -505,11 +512,16 @@ rviz/SetGoal:
   Topic: goal
 rviz_default_plugins/SetGoal:
   Topic:
-    Value: /goal_pose
+    Value: goal_pose
 SetInitialPose:
   Theta std deviation: 0.2617993950843811
   X std deviation: 0.5
   Y std deviation: 0.5
+  Covariance x: 0.25
+  Covariance y: 0.25
+  Covariance yaw: 0.06853891909122467
+  Topic:
+    Value: initialpose
 rviz/SetInitialPose:
   Topic: initialpose
 rviz_default_plugins/SetInitialPose:
